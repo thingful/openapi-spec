@@ -1,0 +1,10 @@
+{
+  "generator-openapi-repo": {
+    "importExistingSpec": false,
+    "name": "Thingful",
+    "repo": "smulube/thingful-swagger",
+    "splitSpec": false,
+    "samples": true,
+    "installSwaggerUI": true
+  }
+}
