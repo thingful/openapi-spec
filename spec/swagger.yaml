@@ -4,26 +4,30 @@
 swagger: '2.0'
 # You should specify common part of your endpoints in the following format:
 #   <schemes>://<host><basepath>
+
 schemes:
   - http # Remove if your API doesn't support HTTP
   - https # Remove if your API donsn't support HTTPS
-host: example.com # Replace with your hostname. You can also specify port e.g. example.com:777
-basePath: /api/v1 # Replace with your basePath. Note: SHOULD begin with '/'.
+
+host: api.thingful.net # Replace with your hostname. You can also specify port e.g. example.com:777
+
+basePath: / # Replace with your basePath. Note: SHOULD begin with '/'.
+
 info:
   # Describe your API here, you can use GFM (https://guides.github.com/features/mastering-markdown) here
   description: |
     This is an **example** API to demontstrate features of OpenAPI specification
     # Introduction
-    This specification is intended to to be a good starting point for describint your API in 
+    This specification is intended to to be a good starting point for describint your API in
     [OpenAPI/Swagger format](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).
-    It also demonstrates features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo) tool and 
-    [ReDoc](https://github.com/Rebilly/ReDoc) documentation engine. So beyond the standard OpenAPI syntax we use a few 
+    It also demonstrates features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo) tool and
+    [ReDoc](https://github.com/Rebilly/ReDoc) documentation engine. So beyond the standard OpenAPI syntax we use a few
     [vendor extensions](https://github.com/Rebilly/ReDoc/blob/master/docs/redoc-vendor-extensions.md).
-    
+
     # OpenAPI Specification
     The goal of The OpenAPI Specification is to define a standard, language-agnostic interface to REST APIs which
     allows both humans and computers to discover and understand the capabilities of the service without access to source
-    code, documentation, or through network traffic inspection. When properly defined via OpenAPI, a consumer can 
+    code, documentation, or through network traffic inspection. When properly defined via OpenAPI, a consumer can
     understand and interact with the remote service with a minimal amount of implementation logic. Similar to what
     interfaces have done for lower-level programming, OpenAPI removes the guesswork in calling the service.
 
@@ -88,11 +92,11 @@ securityDefinitions:
     type: basic
 
 # Holds the relative paths to the individual endpoints. The path is appended to the
-# basePath in order to construct the full URL. 
+# basePath in order to construct the full URL.
 paths:
   '/users/{username}': # path parameter in curly braces
     # documentation for GET operation for this path
-    
+
     # parameters list that are used with each operation for this path
     parameters:
       - name: pretty_print
@@ -103,18 +107,18 @@ paths:
     get:
       tags:
         - User
-      
+
       # summary is up to 120 symbold but we recommend to be shortest as possible
       summary: Get user by user name
-      
+
       # you can use GFM in operation description too: https://guides.github.com/features/mastering-markdown
-      description: | 
-        Some description of the operation. 
+      description: |
+        Some description of the operation.
         You can use `markdown` here.
-      
+
       # operationId should be unique across the whole specification
       operationId: getUserByName
-      
+
       # list of parameters for the operation
       parameters:
         - name: username
@@ -126,7 +130,7 @@ paths:
           in: query
           description: Filter users without email
           type: boolean
-      
+
       # security schemas applied to this operation
       security:
         - main_auth:
@@ -181,7 +185,7 @@ paths:
           description: Invalid user supplied
         '404':
           description: User not found
-  
+
   '/echo':
     post:
       tags:
