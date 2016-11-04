@@ -1,0 +1,10 @@
+{
+  "generator-openapi-repo": {
+    "importExistingSpec": false,
+    "name": "Thingful",
+    "repo": "thingful/api-docs",
+    "splitSpec": true,
+    "samples": true,
+    "installSwaggerUI": true
+  }
+}
