@@ -1,144 +1,296 @@
 swagger: '2.0'
-# You should specify common part of your endpoints in the following format:
-#   <schemes>://<host><basepath>
-
 schemes:
-  - http # Remove if your API doesn't support HTTP
-  - https # Remove if your API donsn't support HTTPS
-
-host: api.thingful.net # Replace with your hostname. You can also specify port e.g. example.com:777
-
-basePath: / # Replace with your basePath. Note: SHOULD begin with '/'.
-
+  - http
+  - https
+host: api.thingful.net
+basePath: /
 info:
-  # Describe your API here, you can use GFM (https://guides.github.com/features/mastering-markdown) here
   description: |
+    This is the documentation for Thingful's search and access API for Internet of Things devices.
+    
     # Introduction
-    This specification is intended to to be a good starting point for describing your API in
-    [OpenAPI/Swagger format](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).
-    It also demonstrates features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo) tool and
-    [ReDoc](https://github.com/Rebilly/ReDoc) documentation engine. So beyond the standard OpenAPI syntax we use a few
-    [vendor extensions](https://github.com/Rebilly/ReDoc/blob/master/docs/redoc-vendor-extensions.md).
+    This API is documented in **OpenAPI format** and is based on
+    [Petstore sample](http://petstore.swagger.io/) provided by [swagger.io](http://swagger.io) team.
+    
+    # Cross-Origin Resource Sharing
+    This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/).
+    And that allows cross-domain communication from the browser.
+    All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
+    
+    # Authentication
+    The Thingful API offers three forms of authentication:
+      - Bearer authentication
+      - Basic authentication
+      - API Key authentication
 
-    # OpenAPI Specification
-    The goal of The OpenAPI Specification is to define a standard, language-agnostic interface to REST APIs which
-    allows both humans and computers to discover and understand the capabilities of the service without access to source
-    code, documentation, or through network traffic inspection. When properly defined via OpenAPI, a consumer can
-    understand and interact with the remote service with a minimal amount of implementation logic. Similar to what
-    interfaces have done for lower-level programming, OpenAPI removes the guesswork in calling the service.
-
-  version: '2016.11.01' # Your API version
-
-  title: Thingful # Replace with your API title
-
-  termsOfService: 'https://thingful.net/site/tos/' 
-  
+    ## Bearer
+    This form of authentication requires sending an `Authorization` header containing the type value `Bearer` followed by your authentication token.
+    
+    ## Basic
+    Basic authentication allows users to authenticate by sending their username and password.
+    
+    ## API Key
+    API Key authentication also allows clients to authenticate by sending their authentication token via a url query parameter.
+    
+    This is less secure than sending it via a header, as the token value will be included in server logs, so is only included to support clients unable to send HTTP headers.
+    
+    <!-- ReDoc-Inject: <security-definitions> -->
+    
+  version: 2016.12.01
+  title: Thingful
+  termsOfService: 'https://thingful.net/site/tos/'
   contact:
     email: support@thingful.net
-    url: 'https://thingful.net/site/contact'
-  
   x-logo:
-    url: 'https://apis.guru/openapi-template/logo.png'
-    
+    url: 'logo.png'
+  
 externalDocs:
-  description: Published API documentation
+  description: The published API specification is available here.
   url: 'https://thingful.github.io/openapi-spec'
   
-produces:
-  # List of mime types your API endpoins can return.
-  # This is a global default. You can OVERWRITE it in each specific operation.
-  # Remove the ones not used in your API
-  - "application/vnd.api+json"
-  
-consumes:
-  # List of mime types your API endpoints consume.
-  # This is a global default. You can OVERWRITE it in each specific operation.
-  # Remove the ones not supported by your API
-  - "application/vnd.api+json"
-
-# A list of tags used by the specification with additional metadata.
-# The order of the tags can be used to reflect on their order by the parsing tools.
 tags:
-  - name: Things
-    description: Operations related to things
-  - name: Users
-    description: Operations related to users
+  - name: things
+    description: Operations to do with discovering and accessing IoT resources.
+  - name: entitlements
+    description: Operations to do with entitling third parties to access your data.
+  - name: users
+    description: Operations to do with user accounts.
+    
+consumes:
+  - 'application/vnd.api+json'
   
-# Security scheme definitions that can be used across the specification.
+produces:
+  - 'application/vnd.api+json'
+    
 securityDefinitions:
-  bearer_auth: # security definition name (you can name it as you want)
+  petstore_auth:
+    description: |
+      Get access to data while protecting your account credentials.
+      OAuth2 is also a safer and more secure way to give you access.
+    type: oauth2
+    authorizationUrl: 'http://petstore.swagger.io/api/oauth/dialog'
+    flow: implicit
+    scopes:
+      'write:pets': modify pets in your account
+      'read:pets': read your pets
+  api_key:
+    description: |
+      For this sample, you can use the api key `special-key` to test the authorization filters.
     type: apiKey
-    # The following options are specific to apiKey type
-    in: header # Where API key will be passed: header or query
-    name: Authorization # API key paramteer name
-  basic_auth: # security definition name (you can name it as you want)
-    type: basic
-
+    name: api_key
+    in: header
+    
 paths:
-  /things/{id}:
+  '/things/{id}':
     get:
-      tags: 
-        - Things
-      summary: Get a Thing.
-      produces:
-        - "application/vnd.api+json"
+      tags:
+        - things
+      summary: Get a Thing by it's ID
+      description: |
+        This endpoint returns a snapshot of a Thing identified by it's ID.
       parameters:
         - name: id
           in: path
-          type: integer
+          description: The ID of the Thing
           required: true
+          type: string
+          
       responses:
-        "404":
-          description: Unable to find the thing.
-        "200":
-          description: Successful response.
+        '200':
+          description: Success
           schema:
             type: object
             properties:
-              links:
-                type: object
-                properties:
-                  self:
-                    type: string
-                    format: url
-                  access:
-                    type: string
-                    format: url
-              data:
-                type: object
-                properties:
-                  id:
-                    type: string
-                  type:
-                    type: string
-                  attributes:
-                    $ref: "#/definitions/ThingAttributes"
-          examples:
-            links:
-              self: https://api.thingful.net/things/abc123
-              access: https://api.thingful.net/access?uid=abc123
-            data:
-              id: abc123
-              type: thing
+              id:
+                type: string
+                example: bj7ajg91
+              type:
+                type: string
+                enum:
+                  - thing
               attributes:
-                title: Example Thing
-                description: The description of an example thing
-            x-code-samples:
-              lang: JavaScript
-              source: console.log("hello world");
-      
-      security:
-        - basic_auth: []
-        - bearer_auth: []
+                $ref: '#/definitions/ThingAttributes'
+        '404':
+          description: Not Found
+                
+  '/users':
+    post:
+      tags:
+        - users
+      summary: Create a new User
+      description: |
+        This endpoint allows for new Users to be created. Only authenticated users with the `CreateUser` role will be able to call this endpoint.
+      parameters:
+        - name: user
+          in: body
+          required: true
+          description: The new User record to create.
+          schema:
+            type: object
+            properties:
+              type:
+                type: string
+                enum:
+                  - user
+              attributes:
+                allOf:
+                  - $ref: '#/definitions/UserAttributes'
+                  - $ref: '#/definitions/UserCreateAttributes'
         
+      responses:
+        '201':
+          description: User successfully created
+        '403':
+          description: Forbidden
+          
+  '/users/{id}':
+    get:
+      tags:
+        - users
+      summary: Get a User
+      description: |
+        This endpoint returns information about a user.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the User
+          type: string
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                example: '1762349'
+              type:
+                type: string
+                enum:
+                  - user
+              attributes:
+                $ref: '#/definitions/UserAttributes'
+            required:
+              - id
+              - type
+              - attributes
 definitions:
-  ThingAttributes:
+  Tag:
+    description: A single metadata fact about a resource
+    type: string
+    example: thingful:unit=celsius
+    
+  Metadata:
+    description: A collection of facts about a resource
+    type: array
+    items:
+      $ref: '#/definitions/Tag'
+    example:
+      - thingful:unit=celsius
+      - temperature
+      - thingful:parameter=temperature
+      
+  Location:
+    description: A location for a resource
     type: object
+    properties:
+      longitude:
+        type: number
+        format: float
+        maximum: 180
+        minimum: -180
+        example: -0.084101
+      latitude:
+        type: number
+        format: float
+        maximum: 90
+        minimum: -90
+        example: 51.523379
     required:
-      - title
+      - longitude
+      - latitude
+      
+  Channel:
+    description: A single data channel on a Thing
+    type: object
+    properties:
+      label:
+        type: string
+        example: tempsensor1
+      value:
+        type: string
+        example: '17.2'
+      metadata:
+        $ref: '#/definitions/Metadata'
+    required:
+      - label
+      - value
+      - metadata
+      
+  ThingAttributes:
+    description: The core attributes of a Thing resource
+    type: object
     properties:
       title:
         type: string
-      descriptin:
+        example: My Thermometer
+      description:
         type: string
-    
+        example: An outdoor temperature sensor
+      metadata:
+        $ref: '#/definitions/Metadata'
+      location:
+        $ref: '#/definitions/Location'
+      channels:
+        type: array
+        items:
+          $ref: '#/definitions/Channel'
+    required:
+      - title
+      - metadata
+  
+  UserAttributes:
+    description: The shared attributes of a User resource
+    type: object
+    properties:
+      username:
+        type: string
+        minLength: 3
+        description: The unique username of the user. User's can attempt to change this, but this operation will fail if another user has already claimed that username.
+        example: ellie123
+      name:
+        type: string
+        description: The user's full name.
+        example: Ellie Smith
+      email:
+        type: string
+        format: email
+        description: The email address of the user.
+        example: elliesmith@example.com
+    required:
+      - username
+      - email
+      
+  UserCreateAttributes:
+    description: User attributes that only make sense when creating or updating a user. These will never be returned via the API.
+    type: object
+    properties:
+      password:
+        type: string
+        format: password
+        description: A new or updated password for the user.
+    required:
+      - password
+        
+  UserVerifyAttributes:
+    description: User attributes for verifying a user. These will never be returned via the API.
+    type: object
+    properties:
+      verification_code:
+        type: string
+        description: When a new user record is created, a verification code will be emailed to the supplied email address. This code will presented back to the API to confirm that we have a real email address for the user. This value will never be sent back to the user via the API.
+    required:
+      - verification_code
+      
+      
