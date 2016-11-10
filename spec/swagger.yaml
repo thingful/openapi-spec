@@ -149,24 +149,7 @@ paths:
         '201':
           description: Created User successfully 
           schema:
-            type: object
-            properties:
-              data:
-                type: object
-                properties:
-                  id:
-                    $ref: '#/definitions/UserID'
-                  type:
-                    $ref: '#/definitions/UserType'
-                  attributes:
-                    $ref: '#/definitions/UserAttributes'
-              links:
-                type: object
-                properties:
-                  self:
-                    $ref: '#/definitions/UserSelfLink'
-                required:
-                  - self
+            $ref: '#/definitions/UserResponse'
           headers:
             Location:
               description: This header contains the location of the newly created User resource
@@ -180,6 +163,7 @@ paths:
       tags:
         - users
       summary: Get a User
+      operationId: getUser
       description: |
         This endpoint returns information about a user.
       parameters:
@@ -192,6 +176,25 @@ paths:
         '200':
           description: Success
           schema:
+            $ref: '#/definitions/UserResponse'
+    patch:
+      tags:
+        - users
+      summary: Update a User
+      operationId: updateUser
+      description: |
+        This endpoint allows for updating a User record with new values.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the User
+          type: string
+        - name: user
+          in: body
+          required: true
+          description: The new User record to create.
+          schema:
             type: object
             properties:
               data:
@@ -200,24 +203,25 @@ paths:
                   id:
                     $ref: '#/definitions/UserID'
                   type:
-                    $ref: '#/definitions/UserType'
+                    type: string
+                    enum:
+                      - user
                   attributes:
-                    $ref: '#/definitions/UserAttributes'
+                    allOf:
+                      - $ref: '#/definitions/UserAttributes'
+                      - $ref: '#/definitions/UserCreateAttributes'
                 required:
-                  - id
                   - type
                   - attributes
-              links:
-                type: object
-                properties:
-                  self:
-                    $ref: '#/definitions/UserSelfLink'
-                required:
-                  - self
             required:
               - data
-              - links
-              
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/UserResponse'
+                  
+      
 definitions:
   Tag:
     description: A single metadata fact about a resource
@@ -293,6 +297,34 @@ definitions:
       - title
       - metadata
       
+  UserResponse:
+    description: Response when getting or updating a User
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          id:
+            $ref: '#/definitions/UserID'
+          type:
+            $ref: '#/definitions/UserType'
+          attributes:
+            $ref: '#/definitions/UserAttributes'
+        required:
+          - id
+          - type
+          - attributes
+      links:
+        type: object
+        properties:
+          self:
+            $ref: '#/definitions/UserSelfLink'
+        required:
+          - self
+    required:
+      - data
+      - links
+      
   UserID:
     description: The id of a User
     type: string
@@ -328,9 +360,6 @@ definitions:
         format: email
         description: The email address of the user.
         example: elliesmith@example.com
-    required:
-      - username
-      - email
       
   UserCreateAttributes:
     description: User attributes that only make sense when creating or updating a user. These will never be returned via the API.
@@ -353,4 +382,24 @@ definitions:
     required:
       - verification_code
       
+  UserRequest:
+    description: Object sent when creating or updating a user
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          type:
+            type: string
+            enum:
+              - user
+          attributes:
+            allOf:
+              - $ref: '#/definitions/UserAttributes'
+              - $ref: '#/definitions/UserCreateAttributes'
+        required:
+          - type
+          - attributes
+    required:
+      - data
       
