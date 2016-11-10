@@ -139,6 +139,10 @@ paths:
                     allOf:
                       - $ref: '#/definitions/UserAttributes'
                       - $ref: '#/definitions/UserCreateAttributes'
+                    required:
+                      - username
+                      - email
+                      - password
                 required:
                   - type
                   - attributes
@@ -207,10 +211,9 @@ paths:
                     enum:
                       - user
                   attributes:
-                    allOf:
-                      - $ref: '#/definitions/UserAttributes'
-                      - $ref: '#/definitions/UserCreateAttributes'
+                    $ref: '#/definitions/UserAttributes'
                 required:
+                  - id
                   - type
                   - attributes
             required:
@@ -220,7 +223,41 @@ paths:
           description: Success
           schema:
             $ref: '#/definitions/UserResponse'
-                  
+    delete:
+      tags:
+        - users
+      summary: Delete a User
+      operationId: deleteUser
+      description: |
+        This endpoint allows deleting a user
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: The id of the User
+          type: string
+      responses:
+        '204':
+          description: Successful deletion
+          
+  '/verify':
+    get:
+      tags:
+        - users
+      summary: Verify a User
+      operationId: verifyUser
+      description: |
+        This endpoint allows a client to verify a user account.
+      parameters:
+        - name: verification_code
+          in: query
+          required: true
+          description: A verification code that has been emailed to a user to confirm their email address
+          type: string
+      responses:
+        '200':
+          description: Successful
+      
       
 definitions:
   Tag:
@@ -298,7 +335,7 @@ definitions:
       - metadata
       
   UserResponse:
-    description: Response when getting or updating a User
+    description: Response sent back when getting, creating or updating a User
     type: object
     properties:
       data:
@@ -360,6 +397,16 @@ definitions:
         format: email
         description: The email address of the user.
         example: elliesmith@example.com
+        
+  UserCombine:
+    description: experiment with combinations
+    allOf:
+      - $ref: '#/definitions/UserAttributes'
+      - $ref: '#/definitions/UserCreateAttributes'
+    required:
+      - username
+      - email
+      - password
       
   UserCreateAttributes:
     description: User attributes that only make sense when creating or updating a user. These will never be returned via the API.
@@ -369,8 +416,6 @@ definitions:
         type: string
         format: password
         description: A new or updated password for the user.
-    required:
-      - password
         
   UserVerifyAttributes:
     description: User attributes for verifying a user. These will never be returned via the API.
