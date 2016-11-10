@@ -255,8 +255,8 @@ paths:
           description: A verification code that has been emailed to a user to confirm their email address
           type: string
       responses:
-        '200':
-          description: Successful
+        '204':
+          description: Verification successful
       
       
 definitions:
