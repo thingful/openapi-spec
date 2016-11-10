@@ -128,18 +128,50 @@ paths:
           schema:
             type: object
             properties:
-              type:
-                type: string
-                enum:
-                  - user
-              attributes:
-                allOf:
-                  - $ref: '#/definitions/UserAttributes'
-                  - $ref: '#/definitions/UserCreateAttributes'
+              data:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - user
+                  attributes:
+                    allOf:
+                      - $ref: '#/definitions/UserAttributes'
+                      - $ref: '#/definitions/UserCreateAttributes'
+                required:
+                  - type
+                  - attributes
+            required:
+              - data
         
       responses:
         '201':
-          description: User successfully created
+          description: Created User successfully 
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                properties:
+                  id:
+                    $ref: '#/definitions/UserID'
+                  type:
+                    $ref: '#/definitions/UserType'
+                  attributes:
+                    $ref: '#/definitions/UserAttributes'
+              links:
+                type: object
+                properties:
+                  self:
+                    $ref: '#/definitions/UserSelfLink'
+                required:
+                  - self
+          headers:
+            Location:
+              description: This header contains the location of the newly created User resource
+              type: string
+              
         '403':
           description: Forbidden
           
@@ -162,19 +194,30 @@ paths:
           schema:
             type: object
             properties:
-              id:
-                type: string
-                example: '1762349'
-              type:
-                type: string
-                enum:
-                  - user
-              attributes:
-                $ref: '#/definitions/UserAttributes'
+              data:
+                type: object
+                properties:
+                  id:
+                    $ref: '#/definitions/UserID'
+                  type:
+                    $ref: '#/definitions/UserType'
+                  attributes:
+                    $ref: '#/definitions/UserAttributes'
+                required:
+                  - id
+                  - type
+                  - attributes
+              links:
+                type: object
+                properties:
+                  self:
+                    $ref: '#/definitions/UserSelfLink'
+                required:
+                  - self
             required:
-              - id
-              - type
-              - attributes
+              - data
+              - links
+              
 definitions:
   Tag:
     description: A single metadata fact about a resource
@@ -249,6 +292,23 @@ definitions:
     required:
       - title
       - metadata
+      
+  UserID:
+    description: The id of a User
+    type: string
+    example: "172833"
+    
+  UserType:
+    description: The type of a User
+    type: string
+    enum:
+      - user
+  
+  UserSelfLink:
+    description: Link to the User
+    type: string
+    format: url
+    example: 'https://api.thingful.net/users/172833'
   
   UserAttributes:
     description: The shared attributes of a User resource
