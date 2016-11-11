@@ -7,16 +7,16 @@ basePath: /
 info:
   description: |
     This is the documentation for Thingful's search and access API for Internet of Things devices.
-    
+
     # Introduction
     This API is documented in **OpenAPI format** and is based on
     [Petstore sample](http://petstore.swagger.io/) provided by [swagger.io](http://swagger.io) team.
-    
+
     # Cross-Origin Resource Sharing
     This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/).
     And that allows cross-domain communication from the browser.
     All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
-    
+
     # Authentication
     The Thingful API offers three forms of authentication:
       - Bearer authentication
@@ -25,17 +25,17 @@ info:
 
     ## Bearer
     This form of authentication requires sending an `Authorization` header containing the type value `Bearer` followed by your authentication token.
-    
+
     ## Basic
     Basic authentication allows users to authenticate by sending their username and password.
-    
+
     ## API Key
     API Key authentication also allows clients to authenticate by sending their authentication token via a url query parameter.
-    
+
     This is less secure than sending it via a header, as the token value will be included in server logs, so is only included to support clients unable to send HTTP headers.
-    
+
     <!-- ReDoc-Inject: <security-definitions> -->
-    
+
   version: 2016.12.01
   title: Thingful
   termsOfService: 'https://thingful.net/site/tos/'
@@ -43,11 +43,11 @@ info:
     email: support@thingful.net
   x-logo:
     url: 'logo.png'
-  
+
 externalDocs:
   description: The published API specification is available here.
   url: 'https://thingful.github.io/openapi-spec'
-  
+
 tags:
   - name: things
     description: Operations to do with discovering and accessing IoT resources.
@@ -55,13 +55,15 @@ tags:
     description: Operations to do with entitling third parties to access your data.
   - name: users
     description: Operations to do with user accounts.
-    
+  - name: sessions
+    description: Operations to do with user sessions.
+
 consumes:
   - 'application/vnd.api+json'
-  
+
 produces:
   - 'application/vnd.api+json'
-    
+
 securityDefinitions:
   petstore_auth:
     description: |
@@ -79,22 +81,21 @@ securityDefinitions:
     type: apiKey
     name: api_key
     in: header
-    
+
 paths:
   '/things/{id}':
+    parameters:
+      - name: id
+        in: path
+        description: The ID of the Thing
+        required: true
+        type: string
     get:
       tags:
         - things
-      summary: Get a Thing by it's ID
+      summary: Get a Thing by its ID
       description: |
-        This endpoint returns a snapshot of a Thing identified by it's ID.
-      parameters:
-        - name: id
-          in: path
-          description: The ID of the Thing
-          required: true
-          type: string
-          
+        This endpoint returns a snapshot of a Thing identified by its ID.
       responses:
         '200':
           description: Success
@@ -110,9 +111,13 @@ paths:
                   - thing
               attributes:
                 $ref: '#/definitions/ThingAttributes'
+        '400':
+          $ref: '#/responses/Standard400ErrorResponse'
         '404':
-          description: Not Found
-                
+          $ref: '#/responses/Standard404ErrorResponse'
+        '500':
+          $ref: '#/responses/Standard500ErrorResponse'
+
   '/users':
     post:
       tags:
@@ -148,21 +153,27 @@ paths:
                   - attributes
             required:
               - data
-        
+
       responses:
         '201':
-          description: Created User successfully 
+          description: Created User successfully
           schema:
             $ref: '#/definitions/UserResponse'
           headers:
             Location:
               description: This header contains the location of the newly created User resource
               type: string
-              
+
         '403':
           description: Forbidden
-          
+
   '/users/{id}':
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: The id of the User
+        type: string
     get:
       tags:
         - users
@@ -170,12 +181,6 @@ paths:
       operationId: getUser
       description: |
         This endpoint returns information about a user.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the User
-          type: string
       responses:
         '200':
           description: Success
@@ -189,11 +194,6 @@ paths:
       description: |
         This endpoint allows for updating a User record with new values.
       parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the User
-          type: string
         - name: user
           in: body
           required: true
@@ -230,16 +230,10 @@ paths:
       operationId: deleteUser
       description: |
         This endpoint allows deleting a user
-      parameters:
-        - name: id
-          in: path
-          required: true
-          description: The id of the User
-          type: string
       responses:
         '204':
           description: Successful deletion
-          
+
   '/verify':
     get:
       tags:
@@ -257,14 +251,64 @@ paths:
       responses:
         '204':
           description: Verification successful
-      
-      
+
+  '/sessions':
+    post:
+      tags:
+        - sessions
+      summary: Create a new session token
+      operationId: createSession
+      description: |
+        This endpoint allows creating a new session token for a user by sending their username and password.
+      parameters:
+        - name: Session
+          in: body
+          required: true
+          description: JSON object to create a session
+          schema:
+            $ref: '#/definitions/SessionRequest'
+      responses:
+        '200':
+          description: Session created ok
+          schema:
+            $ref: '#/definitions/SessionResponse'
+        '403':
+          description: Invalid authorization credentials sent
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            'application/json':
+              errors:
+                - status: '403'
+                  title: Forbidden
+                  detail: Invalid authentication credentials were supplied
+        '422':
+          $ref: '#/responses/Standard422ErrorResponse'
+
+  '/sessions/{id}':
+    delete:
+      tags:
+        - sessions
+      summary: Delete a session token (i.e. logout)
+      operationId: deleteSession
+      description: |
+        This endpoint allows a client to mark their session token as deleted, which will have the effect of logging them out.
+      parameters:
+        - name: id
+          in: path
+          type: string
+          required: true
+          description: The ID of the session to delete
+      responses:
+        '204':
+          description: Session deleted
+
 definitions:
   Tag:
     description: A single metadata fact about a resource
     type: string
     example: thingful:unit=celsius
-    
+
   Metadata:
     description: A collection of facts about a resource
     type: array
@@ -274,7 +318,7 @@ definitions:
       - thingful:unit=celsius
       - temperature
       - thingful:parameter=temperature
-      
+
   Location:
     description: A location for a resource
     type: object
@@ -294,7 +338,7 @@ definitions:
     required:
       - longitude
       - latitude
-      
+
   Channel:
     description: A single data channel on a Thing
     type: object
@@ -311,7 +355,7 @@ definitions:
       - label
       - value
       - metadata
-      
+
   ThingAttributes:
     description: The core attributes of a Thing resource
     type: object
@@ -333,7 +377,7 @@ definitions:
     required:
       - title
       - metadata
-      
+
   UserResponse:
     description: Response sent back when getting, creating or updating a User
     type: object
@@ -361,24 +405,24 @@ definitions:
     required:
       - data
       - links
-      
+
   UserID:
     description: The id of a User
     type: string
     example: "172833"
-    
+
   UserType:
     description: The type of a User
     type: string
     enum:
       - user
-  
+
   UserSelfLink:
     description: Link to the User
     type: string
     format: url
     example: 'https://api.thingful.net/users/172833'
-  
+
   UserAttributes:
     description: The shared attributes of a User resource
     type: object
@@ -397,17 +441,7 @@ definitions:
         format: email
         description: The email address of the user.
         example: elliesmith@example.com
-        
-  UserCombine:
-    description: experiment with combinations
-    allOf:
-      - $ref: '#/definitions/UserAttributes'
-      - $ref: '#/definitions/UserCreateAttributes'
-    required:
-      - username
-      - email
-      - password
-      
+
   UserCreateAttributes:
     description: User attributes that only make sense when creating or updating a user. These will never be returned via the API.
     type: object
@@ -416,35 +450,189 @@ definitions:
         type: string
         format: password
         description: A new or updated password for the user.
-        
-  UserVerifyAttributes:
-    description: User attributes for verifying a user. These will never be returned via the API.
+
+# Session definitions
+# ===================
+  SessionID:
+    description: The id of a session - used to destroy and logout
+    type: string
+    example: 4LfnM3RqNQa6xOS192MpVg
+
+  SessionCreationAttributes:
+    description: Attributes for creating a new session token for use with the API.
+    type: object
+    required:
+      - username
+      - password
+    properties:
+      username:
+        type: string
+        description: The username of the user
+        example: ellie123
+      password:
+        type: string
+        format: password
+
+  SessionReturnAttributes:
+    description: Additional attributes returned when a new session is created
     type: object
     properties:
-      verification_code:
+      user_id:
+        $ref: '#/definitions/UserID'
+      expires_at:
         type: string
-        description: When a new user record is created, a verification code will be emailed to the supplied email address. This code will presented back to the API to confirm that we have a real email address for the user. This value will never be sent back to the user via the API.
-    required:
-      - verification_code
-      
-  UserRequest:
-    description: Object sent when creating or updating a user
+        format: datetime
+        description: The date/time at which this token expires.
+        example: '2016-11-11T09:39:03Z'
+        readOnly: true
+      token:
+        type: string
+        description: The actual session token, clients must then send back via the `Authorization` header.
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiZXhwIjoxNDc4ODU3MTQzfQ.YuMb_X9Mm0ZygXHkxZ_qpotONaLx2MIi9uw_6K1ncKs
+        readOnly: true
+
+  SessionRequest:
+    description: Object that is sent to create a new session token
     type: object
+    required:
+      - data
     properties:
       data:
         type: object
+        required:
+          - type
+          - attributes
         properties:
           type:
             type: string
             enum:
-              - user
+              - session
+            description: The type of the request. Must be the string "session"
           attributes:
             allOf:
-              - $ref: '#/definitions/UserAttributes'
-              - $ref: '#/definitions/UserCreateAttributes'
-        required:
-          - type
-          - attributes
+              - $ref: '#/definitions/SessionCreationAttributes'
+            required:
+              - username
+              - password
+
+  SessionResponse:
+    description: Object sent in response to a successful session request
+    type: object
     required:
       - data
-      
+    properties:
+      data:
+        type: object
+        required:
+          - id
+          - type
+          - attributes
+        properties:
+          id:
+            $ref: '#/definitions/SessionID'
+          type:
+            type: string
+            enum:
+              - session
+          attributes:
+            allOf:
+              - $ref: '#/definitions/SessionReturnAttributes'
+
+  ErrorResponse:
+    description: Container object for one or more errors returned by the API.
+    type: object
+    required:
+      - errors
+    properties:
+      errors:
+        type: array
+        items:
+          $ref: '#/definitions/Error'
+
+  Error:
+    description: An error object returned by the API
+    type: object
+    required:
+      - status
+      - title
+    properties:
+      status:
+        type: string
+        description: The HTTP status code applicable to this problem expressed as a string
+      title:
+        type: string
+        description: Short human-readable summary of the problem
+      detail:
+        type: string
+        description: Optional longer form human-readable explanation tailored to be specific to this occurence of the problem.
+      source:
+        type: object
+        properties:
+          pointer:
+            type: string
+            description: Used to refer to a specific field in any received JSON body in the form of a JSON Pointer, e.g. "/data" for a primary data object or "/data/attributes/title" to refer to the title attribute of the object.
+          parameter:
+            type: string
+            description: A string containing a reference to a specific query parameter that caused the problem
+
+responses:
+  Standard500ErrorResponse:
+    description: An unexpected error occurred.
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '500'
+            title: Unexpected Error
+            detail: An error occurred while saving record to the database
+
+  Standard404ErrorResponse:
+    description: The requested resource was not found at the requested location.
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '404'
+            title: Not Found
+            detail: Unable to locate the requested resource.
+
+  Standard400ErrorResponse:
+    description: The client submitted an incorrect or malformed request
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '400'
+            title: Bad Request
+            detail: Missing required query parameter.
+            source:
+              parameter: geobound-long
+
+  Standard403ErrorResponse:
+    description: The client has requested a forbidden request
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '403'
+            title: Forbidden
+            detail: You are forbidden from accessing this resource
+
+  Standard422ErrorResponse:
+    description: The client request cannot be fulfilled due to invalid content
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '422'
+            title: Duplicate username
+            detail: The requested username has already been taken
+            source:
+              pointer: /data/attributes/username
+
+
