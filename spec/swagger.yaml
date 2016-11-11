@@ -7,6 +7,8 @@ basePath: /
 info:
   description: |
     This is the documentation for Thingful's search and access API for Internet of Things devices.
+    
+    **This draft of the documentation is a design proposal, and is not currently implemented.**
 
     # Introduction
     This API is documented in **OpenAPI format** and is based on
@@ -75,6 +77,12 @@ produces:
   - 'application/vnd.api+json'
 
 securityDefinitions:
+  bearer_auth:
+    description: |
+      This scheme relies on authenticating users by having them present a standard `Authorization` header containing the value `Bearer` followed by their API key / authorization token.
+    type: apiKey
+    name: Authorization
+    in: header
   api_key_auth:
     description: |
       For clients unable to send request headers, they can also authenticate by sending their api key or session token via a query parameter.
@@ -92,6 +100,11 @@ parameters:
     in: header
     type: string
     description: Standard Authorization header; token should be sent using the `Bearer` format.
+  apiKey:
+    name: key
+    in: query
+    type: string
+    description: Authorization token can also be sent as a query parameter for clients unable to send valid HTTP headers.
     
 paths:
   '/things/{id}':
@@ -101,6 +114,7 @@ paths:
         description: The ID of the Thing
         required: true
         type: string
+      - $ref: '#/parameters/apiKey'
     get:
       tags:
         - things
@@ -108,6 +122,7 @@ paths:
       security:
         - basic_auth: []
         - api_key_auth: []
+        - bearer_auth: []
       description: |
         This endpoint returns a snapshot of a Thing identified by its ID.
       parameters:
@@ -119,8 +134,7 @@ paths:
             type: object
             properties:
               id:
-                type: string
-                example: bj7ajg91
+                $ref: '#/definitions/ThingID'
               type:
                 type: string
                 enum:
@@ -140,22 +154,62 @@ paths:
       description: |
         This is the primary endpoint used for discovering Things
       parameters:
-        - name: geobound-long
+        - name: long
           in: query
           description: Longitude of a point around which to search
           type: number
           minimum: -180
           maximum: 180
           format: float
-        - name: geobound-lat
+        - name: lat
           in: query
           description: Latitude of a point around which to search
           type: number
           minimum: -90
           maximum: 90
-        - name: c
+          format: float
+        - name: radius
           in: query
-          description: Parameter to select only things containing channels with this metadata. For example this might be a value like `thingful:unit=celsius` to return only things containing temperature channels
+          description: Radius in metres around which to search
+          type: number
+          format: integer
+          minimum: 1
+          maximum: 10000
+        - name: limit
+          in: query
+          description: The number of results per page to return
+          type: number
+          format: integer
+          minimum: 1
+          maximum: 1000
+        - name: sort
+          in: query
+          description: Parameter that specifies how results are sorted.
+          type: string
+          enum:
+            - score
+            - distance
+          default: score
+        - name: starting-before
+          in: query
+          description: Parameter used when paginating to navigate to the previous page of results. The value of this parameter is calculated on the server so clients should not expect to be able to infer the value of this parameter, rather they must just use the previous link returned by the server
+          type: string
+        - name: starting-after
+          in: query
+          description: Parameter used when paginating to navigate to the next page of results. The value of this parameter is calculated on the server, so clients should not expect to be able to infer the value for this parameter, rather they must just use the next link returned by the server.
+          type: string
+        - name: q
+          in: query
+          description: Simple full text search parameter - returns all things containing this term somewhere
+          type: string
+        - name: adv
+          in: query
+          description: |
+            Advanced query search parameter. The value of this parameter can be used to compose arbitrarily complex search queries by sending a URL encoded JSON object containing the desired search criteria.
+            
+            Examples:
+              * '{"channel":"thingful:unit=celsius"}'
+              * '{"channel":"thingful:measure=temperature AND thingful:exposure=outdoor"}'
           type: string
       responses:
         '200':
@@ -363,23 +417,36 @@ definitions:
       - thingful:unit=celsius
       - temperature
       - thingful:parameter=temperature
+      
+  Longitude:
+    description: Decimal longitude value
+    type: number
+    format: float
+    maximum: 180
+    minimum: -180
+    example: -0.084101
+    
+  Latitude:
+    description: Decimal latitude value
+    type: number
+    format: float
+    maximum: 90
+    minimum: -90
+    example: 51.5523379
+    
+  ThingID:
+    description: The ID of a thing
+    type: string
+    example: bj7ajg91
 
   Location:
     description: A location for a resource
     type: object
     properties:
       longitude:
-        type: number
-        format: float
-        maximum: 180
-        minimum: -180
-        example: -0.084101
+        $ref: '#/definitions/Longitude'
       latitude:
-        type: number
-        format: float
-        maximum: 90
-        minimum: -90
-        example: 51.523379
+        $ref: '#/definitions/Latitude'
     required:
       - longitude
       - latitude
@@ -391,15 +458,21 @@ definitions:
       label:
         type: string
         example: tempsensor1
-      value:
-        type: string
-        example: '17.2'
       metadata:
         $ref: '#/definitions/Metadata'
     required:
       - label
-      - value
       - metadata
+
+  AccessChannel:
+    description: Additional properties to be included in an authenticated "access" response
+    allOf:
+      - $ref: '#/definitions/Channel'
+      - type: object
+        properties:
+          value:
+            type: string
+            example: '17.2'
 
   ThingAttributes:
     description: The core attributes of a Thing resource
@@ -619,6 +692,16 @@ definitions:
           parameter:
             type: string
             description: A string containing a reference to a specific query parameter that caused the problem
+            
+  AdvancedQuery:
+    description: Object used to make an "advanced" query. This is a normal query sent to the `/search` endpoint but structured so the query can be sent via POST.
+    type: object
+    properties:
+      long:
+        type: number
+        format: float
+        description: The longitude of a point around which to search
+        example:  
 
 responses:
   Standard500ErrorResponse:
