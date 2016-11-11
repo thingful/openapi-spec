@@ -16,6 +16,16 @@ info:
     This API features Cross-Origin Resource Sharing (CORS) implemented in compliance with  [W3C spec](https://www.w3.org/TR/cors/).
     And that allows cross-domain communication from the browser.
     All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
+    
+    # Roles
+    The Thingful API has the concept of the following roles or scopes:
+    
+      * write:things
+      * read:things
+      * write:users
+      * read:users
+      * write:entitlements
+      * read:entitlements
 
     # Authentication
     The Thingful API offers three forms of authentication:
@@ -65,23 +75,24 @@ produces:
   - 'application/vnd.api+json'
 
 securityDefinitions:
-  petstore_auth:
+  api_key_auth:
     description: |
-      Get access to data while protecting your account credentials.
-      OAuth2 is also a safer and more secure way to give you access.
-    type: oauth2
-    authorizationUrl: 'http://petstore.swagger.io/api/oauth/dialog'
-    flow: implicit
-    scopes:
-      'write:pets': modify pets in your account
-      'read:pets': read your pets
-  api_key:
-    description: |
-      For this sample, you can use the api key `special-key` to test the authorization filters.
+      For clients unable to send request headers, they can also authenticate by sending their api key or session token via a query parameter.
     type: apiKey
-    name: api_key
-    in: header
+    name: key
+    in: query
+  basic_auth:
+    description: |
+      HTTP basic auth can be used.
+    type: basic
 
+parameters:
+  authorizationHeader:
+    name: Authorization
+    in: header
+    type: string
+    description: Standard Authorization header; token should be sent using the `Bearer` format.
+    
 paths:
   '/things/{id}':
     parameters:
@@ -94,8 +105,13 @@ paths:
       tags:
         - things
       summary: Get a Thing by its ID
+      security:
+        - basic_auth: []
+        - api_key_auth: []
       description: |
         This endpoint returns a snapshot of a Thing identified by its ID.
+      parameters:
+        - $ref: '#/parameters/authorizationHeader'
       responses:
         '200':
           description: Success
@@ -111,20 +127,47 @@ paths:
                   - thing
               attributes:
                 $ref: '#/definitions/ThingAttributes'
-        '400':
-          $ref: '#/responses/Standard400ErrorResponse'
         '404':
           $ref: '#/responses/Standard404ErrorResponse'
         '500':
           $ref: '#/responses/Standard500ErrorResponse'
-
+  
+  '/search':
+    get:
+      tags:
+        - things
+      summary: Search things
+      description: |
+        This is the primary endpoint used for discovering Things
+      parameters:
+        - name: geobound-long
+          in: query
+          description: Longitude of a point around which to search
+          type: number
+          minimum: -180
+          maximum: 180
+          format: float
+        - name: geobound-lat
+          in: query
+          description: Latitude of a point around which to search
+          type: number
+          minimum: -90
+          maximum: 90
+        - name: c
+          in: query
+          description: Parameter to select only things containing channels with this metadata. For example this might be a value like `thingful:unit=celsius` to return only things containing temperature channels
+          type: string
+      responses:
+        '200':
+          description: Search request was ok
+        
   '/users':
     post:
       tags:
         - users
       summary: Create a new User
       description: |
-        This endpoint allows for new Users to be created. Only authenticated users with the `CreateUser` role will be able to call this endpoint.
+        This endpoint allows for new Users to be created. Only authenticated users with the `role:create_user` role will be able to call this endpoint.
       parameters:
         - name: user
           in: body
@@ -251,6 +294,8 @@ paths:
       responses:
         '204':
           description: Verification successful
+        '404':
+          description: Unable to locate the verification
 
   '/sessions':
     post:
