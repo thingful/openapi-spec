@@ -263,6 +263,17 @@ paths:
 
         '403':
           description: Forbidden
+        '422':
+          description: Duplicate username detected
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            errors:
+              - status: '422'
+                title: Duplicate username
+                detail: Username is already registered
+                source:
+                  pointer: "/data/attributes/username"
 
   '/users/{id}':
     parameters:
