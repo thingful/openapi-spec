@@ -221,7 +221,7 @@ paths:
         - users
       summary: Create a new User
       description: |
-        This endpoint allows for new Users to be created. Only authenticated users with the `role:create_user` role will be able to call this endpoint.
+        This endpoint allows for new Users to be created. Only authenticated users with the `create:users` role will be able to call this endpoint.
       parameters:
         - name: user
           in: body
