@@ -253,7 +253,7 @@ paths:
 
       responses:
         '201':
-          description: Created User successfully
+          description: Created
           schema:
             $ref: '#/definitions/UserResponse'
           headers:
@@ -268,12 +268,13 @@ paths:
           schema:
             $ref: '#/definitions/ErrorResponse'
           examples:
-            errors:
-              - status: '422'
-                title: Duplicate username
-                detail: Username is already registered
-                source:
-                  pointer: "/data/attributes/username"
+            'application/json':
+              errors:
+                - status: '422'
+                  title: Duplicate username
+                  detail: Username is already registered
+                  source:
+                    pointer: "/data/attributes/username"
 
   '/users/{id}':
     parameters:
@@ -379,11 +380,11 @@ paths:
             $ref: '#/definitions/SessionRequest'
       responses:
         '200':
-          description: Session created ok
+          description: OK
           schema:
             $ref: '#/definitions/SessionResponse'
         '403':
-          description: Invalid authorization credentials sent
+          description: Forbidden
           schema:
             $ref: '#/definitions/ErrorResponse'
           examples:
@@ -393,7 +394,17 @@ paths:
                   title: Forbidden
                   detail: Invalid authentication credentials were supplied
         '422':
-          $ref: '#/responses/Standard422ErrorResponse'
+          description: Unprocessable Entity
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            'application/json':
+              errors:
+                - status: '422'
+                  title: Unprocessable Entity
+                  detail: Missing required attribute to create a session
+                  source:
+                    pointer: "/data/attributes/password"
 
   '/sessions/{id}':
     delete:
