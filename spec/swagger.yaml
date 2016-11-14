@@ -19,6 +19,11 @@ info:
     And that allows cross-domain communication from the browser.
     All responses have a wildcard same-origin which makes them completely public and accessible to everyone, including any code on any site.
     
+    # Versioning
+     We strive not to release any breaking changes to the Thingful API, but over time the public API must change and evolve in response to changing requirements of clients or new functionality being added. To minimise the impact of any changes, clients consuming data from the Thingful should send a special version parameter with all requests. This parameter defines a timestamp in YYYYMMDD form, which indicates the most recent version of the API the client application is capable of consuming.
+
+       This parameter can either be supplied via a `version` query parameter, or it can be specified by means of the custom HTTP header: `X-Thingful-Version`.
+    
     # Roles
     The Thingful API has the concept of the following roles or scopes:
     
@@ -28,6 +33,8 @@ info:
       * read:users
       * write:entitlements
       * read:entitlements
+      
+    TODO: figure out what the above should be
 
     # Authentication
     The Thingful API offers three forms of authentication:
