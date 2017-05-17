@@ -1,12 +1,15 @@
 language: node_js
 node_js:
   - "node"
+before_script:
+  - npm install -g gulp
+script: gulp
 deploy:
   - skip_cleanup: true
     provider: script
     script: npm run deploy
     on:
-      branch: master
+      branch: gh-pages
   - skip_cleanup: true
     provider: script
     script: npm run deploy-branch
