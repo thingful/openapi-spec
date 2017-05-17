@@ -1,8 +1,8 @@
 {
   "generator-openapi-repo": {
     "importExistingSpec": false,
-    "name": "Thingful",
-    "repo": "thingful/openapi-spec",
+    "name": "Isaiah King",
+    "repo": "isaiah-king/openapi-spec",
     "splitSpec": false,
     "samples": true,
     "installSwaggerUI": true
