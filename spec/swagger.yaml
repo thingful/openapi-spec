@@ -122,6 +122,7 @@ paths:
         required: true
         type: string
       - $ref: '#/parameters/apiKey'
+      - $ref: '#/parameters/authorizationHeader'
     get:
       tags:
         - things
@@ -132,8 +133,6 @@ paths:
         - bearer_auth: []
       description: |
         This endpoint returns a snapshot of a Thing identified by its ID.
-      parameters:
-        - $ref: '#/parameters/authorizationHeader'
       responses:
         '200':
           description: Success
@@ -158,6 +157,11 @@ paths:
       tags:
         - things
       summary: Search things
+      operationId: searchThings
+      security:
+        - basic_auth: []
+        - api_key_auth: []
+        - bearer_auth: []
       description: |
         This is the primary endpoint used for discovering Things
       parameters:
@@ -221,6 +225,51 @@ paths:
       responses:
         '200':
           description: Search request was ok
+          
+  '/access':
+    get:
+      tags:
+        - things
+      summary: Access a thing
+      operationId: accessThing
+      security:
+        - basic_auth: []
+        - api_key_auth: []
+        - bearer_auth: []
+      description: |
+        Access a thing's realtime value.
+      parameters:
+        - $ref: '#/parameters/apiKey'
+        - $ref: '#/parameters/authorizationHeader'
+        - name: uid
+          type: string
+          description: The ID of a Thing we want to access
+          required: true
+          in: query
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: object
+            properties:
+              id:
+                $ref: '#/definitions/ThingID'
+              type:
+                type: string
+                enum:
+                  - thing
+              attributes:
+                $ref: '#/definitions/ThingAccessAttributes'
+        '404':
+          description: Specified Thing is not found.
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            'application/json':
+              errors:
+                - status: '404'
+                  title: Not Found
+                  detail: Unable to find the specified thing
         
   '/users':
     post:
@@ -487,6 +536,16 @@ definitions:
       label:
         type: string
         example: tempsensor1
+      type:
+        type: string
+        example: number
+        enum:
+          - number
+          - string
+          - boolean
+          - dateTime
+          - url
+          - binary
       metadata:
         $ref: '#/definitions/Metadata'
     required:
@@ -495,13 +554,17 @@ definitions:
 
   AccessChannel:
     description: Additional properties to be included in an authenticated "access" response
-    allOf:
-      - $ref: '#/definitions/Channel'
-      - type: object
-        properties:
-          value:
-            type: string
-            example: '17.2'
+    type: object
+    required:
+      - value
+    properties:
+      value:
+        type: string
+        example: '17.2'
+      recorded_at:
+        type: string
+        format: datetime
+        example: 2016-11-15T18:36:28Z
 
   ThingAttributes:
     description: The core attributes of a Thing resource
@@ -520,7 +583,31 @@ definitions:
       channels:
         type: array
         items:
-          $ref: '#/definitions/Channel'
+          - $ref: '#/definitions/Channel'
+    required:
+      - title
+      - metadata
+  
+  ThingAccessAttributes:
+    description: The core attributes of a Thing resource
+    type: object
+    properties:
+      title:
+        type: string
+        example: My Thermometer
+      description:
+        type: string
+        example: An outdoor temperature sensor
+      metadata:
+        $ref: '#/definitions/Metadata'
+      location:
+        $ref: '#/definitions/Location'
+      channels:
+        type: array
+        items:
+          allOf:
+            - $ref: '#/definitions/Channel'
+            - $ref: '#/definitions/AccessChannel'
     required:
       - title
       - metadata
