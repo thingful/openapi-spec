@@ -183,7 +183,7 @@ paths:
                     type: string
                     enum:
                       - thingType
-                    descriptin: The type of resource we are updating. For things this must be `thingType`.
+                    description: The type of resource we are updating. For things this must be `thingType`.
                   id:
                     type: string
                     format: url
@@ -218,7 +218,51 @@ paths:
                       - $ref: '#/definitions/ThingAttributes'
                       - $ref: '#/definitions/ThingReadAttributes'
           
-        
+  '/things':
+    post:
+      tags:
+        - things
+      summary: Create Thing
+      operationId: CreateThing
+      description: |
+        This endpoint allows a user with sufficient permissions to create a new Thing instance within Thingful's database
+      parameters:
+        - name: thing
+          in: body
+          description: The incoming Thing data to create.
+          required: true
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                description: The top level container for the updated data for the Thing.
+                required:
+                  - type
+                  - attributes
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - thingType
+                    description: The type of resource we are updating. For things this must be `thingType`.
+                  attributes:
+                    allOf:
+                      - $ref: '#/definitions/ThingAttributes'
+                    required:
+                      - title
+                      - visibility
+                      - endpoint
+                      - provider
+                      - category
+                      - license
+                      - location
+                      - channels
+      responses:
+        '201':
+          description: Success
+      
+      
   '/echo':
     post:
       tags:
@@ -285,12 +329,15 @@ definitions:
       endpoint:
         type: object
         description: An object containing a reference to the remote endpoint at which this data is originally published.
+        required:
+          - uri
         properties:
-          url:
+          uri:
             type: string
             format: url
             example: http://api.example-weather.net/devices/152
-            description: The remote URL at which data can be retrieved for this resource.
+            description: |
+              A unique URI for the resource which must be either the remote URL at which data can be retrieved for this Thing, or a non-resolvable URI representing the Thing.
           contentType:
             type: string
             example: application/json
@@ -298,12 +345,10 @@ definitions:
       provider:
         type: object
         description: An object containing information about the remote data provider.
+        required:
+          - name
+          - url
         properties:
-          id:
-            type: string
-            format: url
-            example: https://api.thingful.net/providers/exampleweather
-            description: Thingful specific ID for the data provider
           name:
             type: string
             example: Example Weather Network
@@ -331,7 +376,8 @@ definitions:
           allOf:
             - $ref: '#/definitions/ChannelIDAttributes'
             - $ref: '#/definitions/ChannelAttributes'
-        
+            
+  # Attributes for a Thing that a client cannot send when creating or updating the resource
   ThingReadAttributes:
     type: object
     properties:
