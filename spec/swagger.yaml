@@ -104,6 +104,7 @@ paths:
       tags:
         - things
       summary: Get a Thing by its ID
+      operationId: GetThingByID
       security:
         - basic_auth: []
         - bearer_auth: []
@@ -112,7 +113,6 @@ paths:
         This endpoint returns data for a Thing (an IoT resource) indexed by Thingful. It returns either the latest snapshot of the resource (which may be the latest data available), or a parameter can be specified which asks Thingful to go and fetch the value from the upstream data source "now".
         
         In addition this endpoint also allows data to be retrieved from points in the past for the resource if it is available.
-      operationId: GetThingByID
       parameters:
         - $ref: '#/parameters/refresh'
         - $ref: '#/parameters/at'
@@ -154,8 +154,71 @@ paths:
                 - status: '404'
                   title: Not Found
                   detail: Unable to locate the Thing at https://api.thingful.net/things/bj7ajg91 
+    patch:
+      tags:
+        - things
+      summary: Update Thing
+      operationId: UpdateThingByID
+      security:
+        - basic_auth: []
+        - bearer_auth: []
+        - api_key_auth: []
+      description: |
+        This endpoint allows the owner of a Thingful resource to send an update containing new observations and/or location information to Thingful. When sending a PATCH request for a thing a client may *only* send the fields they specifically wish to update, other fields can be omitted. These omitted fields will be left unchanged after the update has completed.
+        
+        Typically a client might only send over the contained `observations` property for each channel containing new data points to be stored. 
+      parameters:
+        - name: thing
+          in: body
+          description: The incoming Thing data to update.
+          required: true
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                description: The top level container for the updated data for the Thing.
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - thingType
+                    descriptin: The type of resource we are updating. For things this must be `thingType`.
+                  id:
+                    type: string
+                    format: url
+                    description: The ID of the Thing resource we are updating
+                  attributes:
+                    $ref: '#/definitions/ThingAttributes'
+                    
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: object
+            properties:
+              '@context':
+                $ref: '#/definitions/Context'
+              links:
+                $ref: '#/definitions/Links'
+              data:
+                type: object
+                properties:
+                  '@context':
+                    $ref: '#/definitions/Context'
+                  id:
+                    $ref: '#/definitions/ThingID'
+                  type:
+                    type: string
+                    enum:
+                      - thingType
+                    description: The type of the resource. For things this will always have the value `thingType`.
+                  attributes:
+                    allOf:
+                      - $ref: '#/definitions/ThingAttributes'
+                      - $ref: '#/definitions/ThingReadAttributes'
           
-  
+        
   '/echo':
     post:
       tags:
@@ -282,6 +345,14 @@ definitions:
         format: dateTime
         example: 2017-06-05T11:15:50Z
         description: RFC3339 timestamp representing the time at which the resource was last updated.
+      channels:
+        type: array
+        description: An array of channel objects representing the individual data channels published for the parent Thing
+        items:
+          allOf:
+            - $ref: '#/definitions/ChannelIDAttributes'
+            - $ref: '#/definitions/ChannelReadAttributes'
+            - $ref: '#/definitions/ChannelAttributes'
 
   Location:
     type: object
@@ -325,18 +396,13 @@ definitions:
     type: object
     description: The attributes describing an individual channel within a Thing
     properties:
-      type:
-        type: string
-        description: The type of the resource. For channels this will always have the value `channelType`.
-        enum:
-          - channelType
       domain:
         type: string
         description: The domain of this channel expressed as a JSON-LD expandable property.
         example: m3-lite:Weather
       quantityKind:
         type: string
-        description: The "quantity" this channel is measuring expressed as a JSON-LD expandable property. To give some examples this might be a value like `m3-lite:AirTemperature` or `m3-lite:WindSpeed` - basically what type of quantity in the world is this channel measuring.
+        description: The "quantity" this channel is measuring expressed as a JSON-LD expandable property describing what type of quantity in the world is this channel measuring.
         example: m3-lite:AirTemperature
       measuredBy:
         type: string
@@ -346,6 +412,20 @@ definitions:
         type: string
         description: The unit of measure for this data channel expressed as an expandable JSON-LD property containing a pointer to a unit defined in an external ontology.
         example: m3-lite:DegreeCelsius
+      observations:
+        type: array
+        description: An array containing individual observations for the channel.
+        items:
+          $ref: '#/definitions/Observation'
+          
+  ChannelReadAttributes:
+    type: object
+    properties:
+      type:
+        type: string
+        description: The type of the resource. For channels this will always have the value `channelType`.
+        enum:
+          - channelType
       dataType:
         type: string
         description: The data type of of all values recorded within the observations data structure for this channel. These properties are expandable JSON-LD properties which can be resolved to specific classes within an external ontology.
@@ -358,11 +438,6 @@ definitions:
         type: boolean
         description: Boolean flag indicating whether or not historical data is available for this individual channel
         example: false
-      observations:
-        type: array
-        description: An array containing individual observations for the channel.
-        items:
-          $ref: '#/definitions/Observation'
         
   Observation:
     type: object
