@@ -100,7 +100,7 @@ parameters:
     required: true
     type: string
   perPage:
-    name: perPage
+    name: per_page
     in: query
     type: integer
     description: |
@@ -372,6 +372,9 @@ paths:
           type: string
           format: date-time
         - $ref: '#/parameters/perPage'
+      produces:
+        - application/json
+        - text/csv
       responses:
         '200':
           description: Success
@@ -407,6 +410,11 @@ paths:
                     allOf:
                       - $ref: '#/definitions/ChannelAttributes'
                       - $ref: '#/definitions/ChannelReadAttributes'
+          examples:
+            'text/csv': >
+              id,title
+              38,t-shirt
+              
       
   '/echo':
     post:
@@ -622,11 +630,11 @@ definitions:
   ChannelReadAttributes:
     type: object
     properties:
-      #type:
-      #  type: string
-      #  description: The type of the resource. For channels this will always have the value `channelType`.
-      #  enum:
-      #    - channelType
+      type:
+        type: string
+        description: The type of the resource. For channels this will always have the value `channelType`.
+        enum:
+          - channelType
       dataType:
         type: string
         description: The data type of of all values recorded within the observations data structure for this channel. These properties are expandable JSON-LD properties which can be resolved to specific classes within an external ontology.
@@ -767,3 +775,48 @@ responses:
           - status: '500'
             title: Unexpected Error
             detail: An error occurred while saving record to the database
+  '404ErrorResponse':
+    description: The requested resource was not found
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '404'
+            title: Resource Not Found
+            detail: Unable to locate the requested resource
+  '400ErrorResponse':
+    description: The client submitted an incorrect or malformed request.
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '400'
+            title: Bad Request
+            detail: Missing required parameter
+            source:
+              parameter: lng
+  '403ErrorResponse':
+    description: The client has requested a forbidden resource.
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '403'
+            title: Forbidden
+            detail: You are forbidden from accessing this resource
+  '422ErrorResponse':
+    description: The request cannot be fulfilled due to invalid content
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '422'
+            title: Invalid Request
+            detail: Missing required field
+            source:
+              pointer: /data/attributes/title
+    
