@@ -10,8 +10,8 @@ info:
   description: |
     Thingful.net API documentation - design document.
 
-    This text is markdown, and you can add stuff here etc.
-  version: '1.0.0'
+    **This draft of the documentation is a design proposal, and is not currently deployed, though it is under development.**
+  version: '2017.06.05'
   title: Thingful
   termsOfService: 'https://thingful.net/site/tos/'
   contact:
@@ -21,7 +21,7 @@ info:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
   x-logo:
-    url: 'https://apis.guru/openapi-template/logo.png'
+    url: 'logo.png'
 
 produces:
   # List of mime types your API endpoins can return.
@@ -45,19 +45,19 @@ tags:
     
 # Security scheme definitions that can be used across the specification.
 securityDefinitions:
-  bearer_auth:
+  bearer:
     description: |
       This scheme relies on authenticating users by having them present a standard `Authorization` header containing the value `Bearer` followed by their API key.
     type: apiKey
     name: Authorization
     in: header
-  api_key_auth:
+  api_key:
     description: |
       For clients unable to send request headers, they may also authenticate themselves by sending their API key via a query parameter.
     type: apiKey
     in: query # Where API key will be passed: header or query
     name: key # API key paramteer name
-  basic_auth:
+  basic:
     description: |
       Clients may also send their username and password via HTTP Basic authentication to authenticate themselves.
     type: basic
@@ -106,9 +106,9 @@ paths:
       summary: Get a Thing by its ID
       operationId: GetThingByID
       security:
-        - basic_auth: []
-        - bearer_auth: []
-        - api_key_auth: []
+        - basic: []
+        - bearer: []
+        - api_key: []
       description: |
         This endpoint returns data for a Thing (an IoT resource) indexed by Thingful. It returns either the latest snapshot of the resource (which may be the latest data available), or a parameter can be specified which asks Thingful to go and fetch the value from the upstream data source "now".
         
@@ -160,9 +160,9 @@ paths:
       summary: Update Thing
       operationId: UpdateThingByID
       security:
-        - basic_auth: []
-        - bearer_auth: []
-        - api_key_auth: []
+        - basic: []
+        - bearer: []
+        - api_key: []
       description: |
         This endpoint allows the owner of a Thingful resource to send an update containing new observations and/or location information to Thingful. When sending a PATCH request for a thing a client may *only* send the fields they specifically wish to update, other fields can be omitted. These omitted fields will be left unchanged after the update has completed.
         
@@ -178,6 +178,10 @@ paths:
               data:
                 type: object
                 description: The top level container for the updated data for the Thing.
+                required:
+                  - type
+                  - id
+                  - attributes
                 properties:
                   type:
                     type: string
@@ -185,9 +189,7 @@ paths:
                       - thingType
                     description: The type of resource we are updating. For things this must be `thingType`.
                   id:
-                    type: string
-                    format: url
-                    description: The ID of the Thing resource we are updating
+                    $ref: '#/definitions/ThingID'
                   attributes:
                     $ref: '#/definitions/ThingAttributes'
                     
@@ -279,7 +281,7 @@ paths:
             type: string
             example: 'Hello world!'
       security:
-        - api_key_auth: []
+        - api_key: []
       responses:
         '200':
           description: 'OK'
@@ -369,6 +371,11 @@ definitions:
         example: https://creativecommons.org/licenses/by/3.0/
       location:
         $ref: '#/definitions/Location'
+      metadata:
+        type: array
+        description: Optional array of additional metadata properties for the thing
+        items:
+          $ref: '#/definitions/Property'
       channels:
         type: array
         description: An array of channel objects representing the individual data channels published for the parent Thing
@@ -458,6 +465,11 @@ definitions:
         type: string
         description: The unit of measure for this data channel expressed as an expandable JSON-LD property containing a pointer to a unit defined in an external ontology.
         example: m3-lite:DegreeCelsius
+      metadata:
+        type: array
+        description: Optional array of additional metadata properties for the channel
+        items:
+          $ref: '#/definitions/Property'
       observations:
         type: array
         description: An array containing individual observations for the channel.
@@ -484,10 +496,13 @@ definitions:
         type: boolean
         description: Boolean flag indicating whether or not historical data is available for this individual channel
         example: false
-        
+          
   Observation:
     type: object
     description: An individual observation for a channel is a single data value recorded at some specific location at some specific time instant.
+    required:
+      - recordedAt
+      - value
     properties:
       recordedAt:
         type: string
@@ -499,6 +514,20 @@ definitions:
       value:
         type: string
         description: The actual recorded value serialised as a string. The `dataType` property on the parent channel can be used to control the deserialisation of this property should it be required.
+        example: '12.9'
+  
+  Property:
+    type: object
+    description: A single piece of generic metadata that should be attached to a Thing or Channel. This is used to capture extra metadata that is not already described by explicit properties of the object.
+    properties:
+      prop:
+        type: string
+        description: The name of this property, it can either be a URL literal, or a JSON-LD expandable property which resolves to a complete URL.
+        example: thingful:hasBusRoute
+      val:
+        type: string
+        description: The value of the property. This can either be an expandable JSON-LD property, a complete URL describing some specific property, or a string literal.
+        example: '42'
         
   Links:
     description: Object that holds links pertaining to the resource or resources currently being requested
