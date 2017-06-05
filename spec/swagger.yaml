@@ -1,57 +1,33 @@
-# This is an **example** API to demontstrate features of OpenAPI specification.
-# It doesn't cover all OpenAPI features. For more full example check out: https://github.com/APIs-guru/petstore_extended
-
 swagger: '2.0'
 # You should specify common part of your endpoints in the following format:
 #   <schemes>://<host><basepath>
 schemes:
-  - http # Remove if your API doesn't support HTTP
   - https # Remove if your API donsn't support HTTPS
-host: example.com # Replace with your hostname. You can also specify port e.g. example.com:777
-basePath: /api/v1 # Replace with your basePath. Note: SHOULD begin with '/'.
+host: api.thingful.net
+basePath: /
 info:
   # Describe your API here, you can use GFM (https://guides.github.com/features/mastering-markdown) here
   description: |
-    This is an **example** API to demontstrate features of OpenAPI specification
-    # Introduction
-    This specification is intended to to be a good starting point for describint your API in 
-    [OpenAPI/Swagger format](https://github.com/OAI/OpenAPI-Specification/blob/master/versions/2.0.md).
-    It also demonstrates features of [generator-openapi-repo](https://github.com/Rebilly/generator-openapi-repo) tool and 
-    [ReDoc](https://github.com/Rebilly/ReDoc) documentation engine. So beyond the standard OpenAPI syntax we use a few 
-    [vendor extensions](https://github.com/Rebilly/ReDoc/blob/master/docs/redoc-vendor-extensions.md).
-    
-    # OpenAPI Specification
-    The goal of The OpenAPI Specification is to define a standard, language-agnostic interface to REST APIs which
-    allows both humans and computers to discover and understand the capabilities of the service without access to source
-    code, documentation, or through network traffic inspection. When properly defined via OpenAPI, a consumer can 
-    understand and interact with the remote service with a minimal amount of implementation logic. Similar to what
-    interfaces have done for lower-level programming, OpenAPI removes the guesswork in calling the service.
+    Thingful.net API documentation - design document.
 
-  version: '1.0.0' # Your API version
-  # It can be any string but it is better to use semantic versioning: http://semver.org/
-  # Warning: OpenAPI require version to be string, but without quotation YAML can recognize it as number.
-
-  title: Example.com # Replace with your API title
-  # Keep it simple. Don't add "API" or verison at the end of the string.
-
-  termsOfService: 'https://example.com/terms/' # [Optional] Replace with an URL to your ToS
+    This text is markdown, and you can add stuff here etc.
+  version: '1.0.0'
+  title: Thingful
+  termsOfService: 'https://thingful.net/site/tos/'
   contact:
-    email: contact@example.com # [Optional] Replace with your contact email
-    url: 'http://example.com/contact' # [Optional] Replace with link to your contact form
+    email: 'support@thingful.net'
+    url: 'https://thingful.net/site/contact'
   license:
     name: Apache 2.0
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
   x-logo:
     url: 'https://apis.guru/openapi-template/logo.png'
-externalDocs:
-  description: Find out how to create Github repo for your OpenAPI spec.
-  url: 'https://github.com/Rebilly/generator-openapi-repo'
+
 produces:
   # List of mime types your API endpoins can return.
   # This is a global default. You can OVERWRITE it in each specific operation.
   # Remove the ones not used in your API
   - application/json
-  - application/xml
   - text/csv
   # you can add any mime type your API produces to the list
 consumes:
@@ -59,128 +35,110 @@ consumes:
   # This is a global default. You can OVERWRITE it in each specific operation.
   # Remove the ones not supported by your API
   - application/json
-  - application/xml
+  - text/csv
   # you can add any mime type your API consumes to the list
 
 # A list of tags used by the specification with additional metadata.
-# The order of the tags can be used to reflect on their order by the parsing tools.
 tags:
-  - name: Echo
-    description: Example echo operations
-  - name: User
-    description: Operations about user
+  - name: things
+    description: Operations to do with discovering and accessing IoT resources.
+    
 # Security scheme definitions that can be used across the specification.
 securityDefinitions:
-  main_auth: # security definition name (you can name it as you want)
-    type: oauth2 # authorization type, one of: oauth2, basic, apiKey
-    # the following options are specific to oauth2 type
-    authorizationUrl: 'http://example.com/api/oauth/dialog'
-    flow: implicit
-    scopes:
-      'read:users': read users info
-      'write:users': modify or remove users
-  api_key: # security definition name (you can name it as you want)
+  bearer_auth:
+    description: |
+      This scheme relies on authenticating users by having them present a standard `Authorization` header containing the value `Bearer` followed by their API key.
     type: apiKey
-    # The following options are specific to apiKey type
-    in: header # Where API key will be passed: header or query
-    name: api_key # API key paramteer name
-  basic_auth: # security definition name (you can name it as you want)
+    name: Authorization
+    in: header
+  api_key_auth:
+    description: |
+      For clients unable to send request headers, they may also authenticate themselves by sending their API key via a query parameter.
+    type: apiKey
+    in: query # Where API key will be passed: header or query
+    name: key # API key paramteer name
+  basic_auth:
+    description: |
+      Clients may also send their username and password via HTTP Basic authentication to authenticate themselves.
     type: basic
 
+parameters:
+  authorizationHeader:
+    name: Authorization
+    in: header
+    type: string
+    description: Standard Authorization header; token must be sent using the `Bearer` format.
+  apiKey:
+    name: key
+    in: query
+    type: string
+    description: For clients unable to send HTTP headers, they may also send their authorization token via a query parameter.
+  refresh:
+    name: refresh
+    in: query
+    type: boolean
+    description: |
+      Boolean flag indicating whether or not the client desires Thingful to go and try and retrieve the latest value from the upstream data provider, or just to return the last indexed value currently stored in Thingful's database.
+    default: false
+  at:
+    name: at
+    in: query
+    type: string
+    format: date-time
+    description: |
+      This parameter is used to hold a RFC3339/ISO8601 timestamp which indicates the instance in time at which the client desires to receive data.
+    
 # Holds the relative paths to the individual endpoints. The path is appended to the
 # basePath in order to construct the full URL. 
 paths:
-  '/users/{username}': # path parameter in curly braces
-    # documentation for GET operation for this path
-    
-    # parameters list that are used with each operation for this path
+  '/things/{id}':
     parameters:
-      - name: pretty_print
-        in: query # place where paramter is passed: path, header, query or body, formData
-        description: Pretty print response
-        # type of the paramter: string, number, integer, boolean, array
-        type: boolean
+      - name: id
+        in: path
+        description: The ID of the Thing
+        required: true
+        type: string
+      - $ref: '#/parameters/authorizationHeader'
+      - $ref: '#/parameters/apiKey'
     get:
       tags:
-        - User
-      
-      # summary is up to 120 symbold but we recommend to be shortest as possible
-      summary: Get user by user name
-      
-      # you can use GFM in operation description too: https://guides.github.com/features/mastering-markdown
-      description: | 
-        Some description of the operation. 
-        You can use `markdown` here.
-      
-      # operationId should be unique across the whole specification
-      operationId: getUserByName
-      
-      # list of parameters for the operation
-      parameters:
-        - name: username
-          in: path
-          description: 'The name that needs to be fetched'
-          required: true
-          type: string
-        - name: with_email
-          in: query
-          description: Filter users without email
-          type: boolean
-      
-      # security schemas applied to this operation
+        - things
+      summary: Get a Thing by its ID
       security:
-        - main_auth:
-          - 'read:users' # for auth2 provide list of scopes here
-        - api_key: []
-      # overwriting default global produces
-      produces:
-        - application/json
-      responses: # list of responses
-        '200':
-          description: Success
-          schema: # response schema can be specified for each response
-            $ref: '#/definitions/User'
-          examples:
-          # repsonse samples for each type operation produces
-            application/json:
-              username: user1
-              email: user@example.com
-        '403':
-          description: Forbidden
-        '404':
-          description: User not found
-    # documentation for PUT operation for this path
-    put:
-      tags:
-        - User
-      summary: Updated user
-      description: This can only be done by the logged in user.
-      operationId: updateUser
-      produces:
-        - application/json
+        - basic_auth: []
+        - bearer_auth: []
+        - api_key_auth: []
+      description: |
+        This endpoint returns data for a Thing (an IoT resource) indexed by Thingful. It returns either the latest snapshot of the resource (which may be the latest data available), or a parameter can be specified which asks Thingful to go and fetch the value from the upstream data source "now".
+        
+        In addition this endpoint also allows data to be retrieved from points in the past for the resource if it is available.
+      operationId: GetThingByID
       parameters:
-        - name: username
-          in: path
-          description: The name that needs to be updated
-          required: true
-          type: string
-        - in: body
-          name: body
-          description: Updated user object
-          required: true
-          # for body parameter you should specify request schema instead of type
-          schema:
-            $ref: '#/definitions/User'
-      security:
-        - main_auth:
-          - 'write:users'
+        - $ref: '#/parameters/refresh'
+        - $ref: '#/parameters/at'
       responses:
         '200':
-          description: OK
-        '400':
-          description: Invalid user supplied
-        '404':
-          description: User not found
+          description: Success
+          schema:
+            type: object
+            properties:
+              '@context':
+                $ref: '#/definitions/Context'
+              links:
+                $ref: '#/definitions/Links'
+              data:
+                type: object
+                properties:
+                  '@context':
+                    $ref: '#/definitions/Context'
+                  id:
+                    $ref: '#/definitions/ThingID'
+                  type:
+                    type: string
+                    enum:
+                      - thingType
+                  attributes:
+                    $ref: '#/definitions/ThingAttributes'
   
   '/echo':
     post:
@@ -198,7 +156,7 @@ paths:
             type: string
             example: 'Hello world!'
       security:
-        - api_key: []
+        - api_key_auth: []
       responses:
         '200':
           description: 'OK'
@@ -216,14 +174,91 @@ paths:
               type: string
               format: date-time
               description: date in UTC when token expires
+              
 # An object to hold data types that can be consumed and produced by operations.
 # These data types can be primitives, arrays or models.
 definitions:
+  ThingID:
+    description: The ID of a Thing
+    type: string
+    example: https://api.thingful.net/things/bj7ajg91
+  
+  ThingAttributes:
+    description: The core attributes of a Thing resource
+    type: object
+    properties:
+      title:
+        type: string
+        example: Weather Station 152
+      description:
+        type: string
+        example: Weather station located in Brighton, UK.
+      createdAt:
+        type: string
+        format: dateTime
+        example: 2017-05-29T11:16:34Z
+      updatedAt:
+        type: string
+        format: dateTime
+        example: 2017-06-05T11:15:50Z
+      visibility:
+        type: string
+        enum:
+          - thingful:Open
+          - thingful:Shared
+          - thingful:Closed
+        example: thingful:Shared
+      endpoint:
+        type: object
+        properties:
+          url:
+            type: string
+            format: url
+            example: http://api.example-weather.net/devices/152
+          contentType:
+            type: string
+            example: application/json
+      provider:
+        type: object
+        properties:
+          id:
+            type: string
+            format: url
+            example: https://api.thingful.net/providers/exampleweather
+          type:
+            type: string
+            enum:
+              - providerType
+            example: providerType
+          name:
+            type: string
+            example: Example Weather Network
+          url:
+            type: string
+            format: url
+            example: https://example-weather.net
+        
+  Links:
+    description: Object that holds links pertaining to the resource or resources currently being requested
+    type: object
+    properties:
+      self:
+        type: string
+        format: url
+        example: https://api.thingful.net/things/bj7ajg91
+        
+  Context:
+    description: Link to a JSON-LD context semantically describing the returned JSON
+    type: string
+    format: url
+    example: https://thingful.github.io/schema/context/page.ld
+    
   Email:
     description: User email address
     type: string
     format: email
     example: john.smith@example.com
+    
   User:
     type: object
     properties:
