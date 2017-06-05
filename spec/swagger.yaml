@@ -137,8 +137,24 @@ paths:
                     type: string
                     enum:
                       - thingType
+                    description: The type of the resource. For things this will always have the value `thingType`.
                   attributes:
-                    $ref: '#/definitions/ThingAttributes'
+                    allOf:
+                      - $ref: '#/definitions/ThingAttributes'
+                      - $ref: '#/definitions/ThingReadAttributes'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+        '404':
+          description: Requested Thing not found
+          schema:
+            $ref: '#/definitions/ErrorResponse'
+          examples:
+            'application/json':
+              errors:
+                - status: '404'
+                  title: Not Found
+                  detail: Unable to locate the Thing at https://api.thingful.net/things/bj7ajg91 
+          
   
   '/echo':
     post:
@@ -179,7 +195,7 @@ paths:
 # These data types can be primitives, arrays or models.
 definitions:
   ThingID:
-    description: The ID of a Thing
+    description: The ID of the Thing
     type: string
     example: https://api.thingful.net/things/bj7ajg91
   
@@ -190,17 +206,11 @@ definitions:
       title:
         type: string
         example: Weather Station 152
+        description: The title of the Thing
       description:
         type: string
         example: Weather station located in Brighton, UK.
-      createdAt:
-        type: string
-        format: dateTime
-        example: 2017-05-29T11:16:34Z
-      updatedAt:
-        type: string
-        format: dateTime
-        example: 2017-06-05T11:15:50Z
+        description: Human friendly description of the resource.
       visibility:
         type: string
         enum:
@@ -208,35 +218,166 @@ definitions:
           - thingful:Shared
           - thingful:Closed
         example: thingful:Shared
+        description: An expandable JSON-LD property representing how Thingful classifies the resource in terms of the ODI's data classification hierarchy.
       endpoint:
         type: object
+        description: An object containing a reference to the remote endpoint at which this data is originally published.
         properties:
           url:
             type: string
             format: url
             example: http://api.example-weather.net/devices/152
+            description: The remote URL at which data can be retrieved for this resource.
           contentType:
             type: string
             example: application/json
+            description: The content type of the remote data resource.
       provider:
         type: object
+        description: An object containing information about the remote data provider.
         properties:
           id:
             type: string
             format: url
             example: https://api.thingful.net/providers/exampleweather
-          type:
-            type: string
-            enum:
-              - providerType
-            example: providerType
+            description: Thingful specific ID for the data provider
           name:
             type: string
             example: Example Weather Network
+            description: The name of the remote data provider
           url:
             type: string
             format: url
             example: https://example-weather.net
+            description: The website of the remote data provider
+      category:
+        type: string
+        description: The general category of the Thing resource
+        example: thingful:Transport
+      license:
+        type: string
+        format: url
+        description: A field containing a link to the license under which the original data has been published.
+        example: https://creativecommons.org/licenses/by/3.0/
+      location:
+        $ref: '#/definitions/Location'
+      channels:
+        type: array
+        description: An array of channel objects representing the individual data channels published for the parent Thing
+        items:
+          allOf:
+            - $ref: '#/definitions/ChannelIDAttributes'
+            - $ref: '#/definitions/ChannelAttributes'
+        
+  ThingReadAttributes:
+    type: object
+    properties:
+      createdAt:
+        type: string
+        format: dateTime
+        example: 2017-05-29T11:16:34Z
+        description: RFC3339 timestamp representing the time at which the resource has been created.
+      updatedAt:
+        type: string
+        format: dateTime
+        example: 2017-06-05T11:15:50Z
+        description: RFC3339 timestamp representing the time at which the resource was last updated.
+
+  Location:
+    type: object
+    description: Object used to hold location information for a Thing, Channel or Observation.
+    required:
+      - lng
+      - lat
+    properties:
+      lng:
+        type: number
+        format: float
+        description: The longitude of the resource expressed in decimal notation.
+        example: -0.084101
+        maximum: 180
+        minimum: -180
+      lat:
+        type: number
+        format: float
+        description: The latitude of the resource expressed in decimal notation.
+        example: 51.552338
+        maximum: 90
+        minimum: -90
+      elevation:
+        type: number
+        format: float
+        description: The elevation above sea level, expressed in metres.
+        example: 23.9
+        
+  ChannelID:
+    description: The ID of the individual channel
+    type: string
+    example: https://api.thingful.net/things/bj7ajg91/channels/temperature
+  
+  ChannelIDAttributes:
+    type: object
+    properties:
+      id:
+        $ref: '#/definitions/ChannelID'
+        
+  ChannelAttributes:
+    type: object
+    description: The attributes describing an individual channel within a Thing
+    properties:
+      type:
+        type: string
+        description: The type of the resource. For channels this will always have the value `channelType`.
+        enum:
+          - channelType
+      domain:
+        type: string
+        description: The domain of this channel expressed as a JSON-LD expandable property.
+        example: m3-lite:Weather
+      quantityKind:
+        type: string
+        description: The "quantity" this channel is measuring expressed as a JSON-LD expandable property. To give some examples this might be a value like `m3-lite:AirTemperature` or `m3-lite:WindSpeed` - basically what type of quantity in the world is this channel measuring.
+        example: m3-lite:AirTemperature
+      measuredBy:
+        type: string
+        description: A JSON-LD property expressing what type of sensor was used to measure this channel's data value.
+        example: m3-lite:AirThermometer
+      unit:
+        type: string
+        description: The unit of measure for this data channel expressed as an expandable JSON-LD property containing a pointer to a unit defined in an external ontology.
+        example: m3-lite:DegreeCelsius
+      dataType:
+        type: string
+        description: The data type of of all values recorded within the observations data structure for this channel. These properties are expandable JSON-LD properties which can be resolved to specific classes within an external ontology.
+        enum:
+          - thingful:Float
+          - thingful:Integer
+          - thingful:String
+          - thingful:DateTime
+      historicalData:
+        type: boolean
+        description: Boolean flag indicating whether or not historical data is available for this individual channel
+        example: false
+      observations:
+        type: array
+        description: An array containing individual observations for the channel.
+        items:
+          $ref: '#/definitions/Observation'
+        
+  Observation:
+    type: object
+    description: An individual observation for a channel is a single data value recorded at some specific location at some specific time instant.
+    properties:
+      recordedAt:
+        type: string
+        format: dateTime
+        description: The instant at which the observation was recorded expressed as an RFC3339 timestamp.
+        example: 2017-05-29T11:16:34Z
+      location:
+        $ref: '#/definitions/Location'
+      value:
+        type: string
+        description: The actual recorded value serialised as a string. The `dataType` property on the parent channel can be used to control the deserialisation of this property should it be required.
         
   Links:
     description: Object that holds links pertaining to the resource or resources currently being requested
@@ -258,7 +399,48 @@ definitions:
     type: string
     format: email
     example: john.smith@example.com
-    
+  
+  ErrorResponse:
+    description: Container object for one or more errors returned by the API.
+    type: object
+    required:
+      - errors
+    properties:
+      errors:
+        type: array
+        items:
+          $ref: '#/definitions/Error'
+          
+  Error:
+    description: An error object returned by the API.
+    type: object
+    required:
+      - status
+      - title
+    properties:
+      status:
+        type: string
+        description: The HTTP status code applicable to this problem expressed as a string
+        example: 400
+      title:
+        type: string
+        description: Short human-readable summary of the problem
+        example: Bad Request
+      detail:
+        type: string
+        description: Optional longer form human-readable explanation tailored to be specific to this specific occurence of the problem.
+      source:
+        type: object
+        properties:
+          pointer:
+            type: string
+            description: A string containing a JSON pointer to the specific field within a received JSON body that caused the problem, e.g. '/data/attributes/title' to refer to the `title` property within the `attributes` object that is a child of the top level `data` object.
+            example: /data/attributes/title
+          parameter:
+            type: string
+            description: A string containing a reference to a specific query parameter that has caused the problem.
+            example: lng
+            
   User:
     type: object
     properties:
@@ -279,3 +461,15 @@ definitions:
         example: Smith
       email:
         $ref: '#/definitions/Email'
+        
+responses:
+  '500ErrorResponse':
+    description: An unexpected error occurred.
+    schema:
+      $ref: '#/definitions/ErrorResponse'
+    examples:
+      'application/json':
+        errors:
+          - status: '500'
+            title: Unexpected Error
+            detail: An error occurred while saving record to the database
