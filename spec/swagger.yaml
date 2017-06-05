@@ -42,6 +42,8 @@ consumes:
 tags:
   - name: things
     description: Operations to do with discovering and accessing IoT resources.
+  - name: channels
+    description: Operations to do with accessing individual thing channels
     
 # Security scheme definitions that can be used across the specification.
 securityDefinitions:
@@ -79,6 +81,8 @@ parameters:
     type: boolean
     description: |
       Boolean flag indicating whether or not the client desires Thingful to go and try and retrieve the latest value from the upstream data provider, or just to return the last indexed value currently stored in Thingful's database.
+      
+      It is an error to set `refresh` to true if the client has supplied any other of the historical time parameters, i.e. `at`, `from` or `to`.
     default: false
   at:
     name: at
@@ -86,18 +90,32 @@ parameters:
     type: string
     format: date-time
     description: |
-      This parameter is used to hold a RFC3339/ISO8601 timestamp which indicates the instance in time at which the client desires to receive data.
+      This parameter is used to hold a RFC3339 timestamp which indicates the instance in time at which the client desires to receive data.
+      
+      It is an error to specify an `at` value when you also supply `from` and `to` parameters.
+  thingID:
+    name: thingID
+    in: path
+    description: The ID of the Thing
+    required: true
+    type: string
+  perPage:
+    name: perPage
+    in: query
+    type: integer
+    description: |
+      This parameter is used when paging through result sets to control how many results are returned within a single request.
+      
+      This parameter can be used both within search results and time series queries expressed at the channel level.
+    maximum: 1000
+    minimum: 1
     
 # Holds the relative paths to the individual endpoints. The path is appended to the
 # basePath in order to construct the full URL. 
 paths:
-  '/things/{id}':
+  '/things/{thingID}':
     parameters:
-      - name: id
-        in: path
-        description: The ID of the Thing
-        required: true
-        type: string
+      - $ref: '#/parameters/thingID'
       - $ref: '#/parameters/authorizationHeader'
       - $ref: '#/parameters/apiKey'
     get:
@@ -227,7 +245,11 @@ paths:
       summary: Create Thing
       operationId: CreateThing
       description: |
-        This endpoint allows a user with sufficient permissions to create a new Thing instance within Thingful's database
+        This endpoint allows a user with sufficient permissions to create a new Thing instance within Thingful's database.
+      security:
+        - basic: []
+        - bearer: []
+        - api_key: []
       parameters:
         - name: thing
           in: body
@@ -263,7 +285,128 @@ paths:
       responses:
         '201':
           description: Success
-      
+          schema:
+            type: object
+            properties:
+              '@context':
+                $ref: '#/definitions/Context'
+              links:
+                $ref: '#/definitions/Links'
+              data:
+                type: object
+                description: Container for the created Thing resource
+                properties:
+                  '@context':
+                    $ref: '#/definitions/Context'
+                  id:
+                    $ref: '#/definitions/ThingID'
+                  type:
+                    type: string
+                    enum:
+                      - thingType
+                    description: The type of the resource. For things this will always have the value `thingType`.
+                  attributes:
+                    allOf:
+                      - $ref: '#/definitions/ThingAttributes'
+                      - $ref: '#/definitions/ThingReadAttributes'
+          headers:
+            Location:
+              description: The location of the newly created Thing resource
+              type: string
+              format: url
+  
+  '/things/{thingID}/channels/{channelID}':
+    parameters:
+      - $ref: '#/parameters/thingID'
+      - name: channelID
+        in: path
+        description: The ID of the channel
+        required: true
+        type: string
+      - $ref: '#/parameters/authorizationHeader'
+      - $ref: '#/parameters/apiKey'
+    get:
+      tags:
+        - channels
+      summary: Get a Channel by its ID
+      operationId: GetChannelById
+      security:
+        - basic: []
+        - bearer: []
+        - api_key: []
+      description: |
+        This endpoint returns data for an individual Channel belonging to a Thing indexed by Thingful. It allows clients to either request the last indexed snapshot of the channel, or if historical data for the channel is available, either a snapshot at a specific instance in time or a range of historical data.
+        
+        Clients are also able to request that Thingful attempt to go and fetch the latest data for a channel by setting the `refresh` parameter to true.
+      parameters:
+        - $ref: '#/parameters/refresh'
+        - $ref: '#/parameters/at'
+        - name: from
+          in: query
+          description: |
+            This parameter is used to specify the start point of a time interval for which the client wishes to obtain data. It is expressed as an RFC3339 timestamp.
+            
+            It is an error to request both a range (using `from` and `to`) and a specific instance (using `at`).
+          type: string
+          format: date-time
+        - name: to
+          in: query
+          description: |
+            This parameter is used to specify the end point of a time interval for which the client wishes to obtain data. It is expressed as an RFC3339 timestamp.
+            
+            It is an error to request both a range (using `from` and `to`) and a specific instance (using `at`).
+            
+            It is also an error to specify a `to` value without a corresponding `from` timestamp, however you **may** request a `from` timestamp without a corresponding `to`, as in this case `to` defaults to the current time.
+          type: string
+          format: date-time
+        - name: after
+          in: query
+          description: |
+            This parameter is used to paginate through large sets of observations for a channel. If present its value must be an RFC3339 timestamp indicating within a range denoted by `from` and `to` parameters that we only want to obtain observations after this instant.
+            
+            This can be used by clients to page through all available observations for the channel.
+            
+            It is an error for this parameter to be present unless the client has also specified `from` and `to` values.
+            
+            It is an error for this parameter to be present if the `at` parameter is also specified.
+          type: string
+          format: date-time
+        - $ref: '#/parameters/perPage'
+      responses:
+        '200':
+          description: Success
+          schema:
+            type: object
+            properties:
+              '@context':
+                $ref: '#/definitions/Context'
+              links:
+                type: object
+                properties:
+                  self:
+                    type: string
+                    format: url
+                    description: Link referencing the current document being viewed by the client.
+                    example: https://api.thingful.net/things/bj7ajg91/channels/temperature?from=2017-01-01T00:00:00Z&to=2017-01-07T00:00:00Z
+                  next:
+                    type: string
+                    format: url
+                    description: Link pointing to the next page of observations available for the channel if any.
+                    example: https://api.thingful.net/things/bj7ajg91/channels/temperature?from=2017-01-01T00:00:00Z&to=2017-01-07T00:00:00Z&after=2017-01-02T00:00:00Z
+              data:
+                type: object
+                properties:
+                  id:
+                    $ref: '#/definitions/ChannelID'
+                  type:
+                    type: string
+                    enum:
+                      - channelType
+                    description: The type of the resource. For things this will always have the value `thingType`.
+                  attributes:
+                    allOf:
+                      - $ref: '#/definitions/ChannelAttributes'
+                      - $ref: '#/definitions/ChannelReadAttributes'
       
   '/echo':
     post:
@@ -390,12 +533,12 @@ definitions:
     properties:
       createdAt:
         type: string
-        format: dateTime
+        format: date-time
         example: 2017-05-29T11:16:34Z
         description: RFC3339 timestamp representing the time at which the resource has been created.
       updatedAt:
         type: string
-        format: dateTime
+        format: date-time
         example: 2017-06-05T11:15:50Z
         description: RFC3339 timestamp representing the time at which the resource was last updated.
       channels:
@@ -479,11 +622,11 @@ definitions:
   ChannelReadAttributes:
     type: object
     properties:
-      type:
-        type: string
-        description: The type of the resource. For channels this will always have the value `channelType`.
-        enum:
-          - channelType
+      #type:
+      #  type: string
+      #  description: The type of the resource. For channels this will always have the value `channelType`.
+      #  enum:
+      #    - channelType
       dataType:
         type: string
         description: The data type of of all values recorded within the observations data structure for this channel. These properties are expandable JSON-LD properties which can be resolved to specific classes within an external ontology.
@@ -506,7 +649,7 @@ definitions:
     properties:
       recordedAt:
         type: string
-        format: dateTime
+        format: date-time
         description: The instant at which the observation was recorded expressed as an RFC3339 timestamp.
         example: 2017-05-29T11:16:34Z
       location:
@@ -536,6 +679,7 @@ definitions:
       self:
         type: string
         format: url
+        description: Link containing the URL used to reference the current document
         example: https://api.thingful.net/things/bj7ajg91
         
   Context:
