@@ -44,6 +44,8 @@ tags:
     description: Operations to do with discovering and accessing IoT resources.
   - name: channels
     description: Operations to do with accessing individual thing channels
+  - name: search
+    description: Search operations
     
 # Security scheme definitions that can be used across the specification.
 securityDefinitions:
@@ -113,6 +115,28 @@ parameters:
 # Holds the relative paths to the individual endpoints. The path is appended to the
 # basePath in order to construct the full URL. 
 paths:
+  '/search':
+    parameters:
+      - $ref: '#/parameters/authorizationHeader'
+      - $ref: '#/parameters/apiKey'
+    get:
+      tags:
+        - search
+        - things
+      summary: Search Things
+      operationId: SearchThings
+      security:
+        - basic: []
+        - bearer: []
+        - api_key: []
+      description: |
+        This endpoint allows clients to issue search requests against the Thingful API to discover IoT resources indexed by Thingful, and made searchable by various geographical and semantic parameters.
+        
+        Search results include only metadata - they never return observations for a Thing. To see this data a client must then issue an access request directly against the Thing, optionally requesting a refresh of the data at that point.
+      responses:
+        '200':
+          description: Success
+      
   '/things/{thingID}':
     parameters:
       - $ref: '#/parameters/thingID'
@@ -122,7 +146,7 @@ paths:
       tags:
         - things
       summary: Get a Thing by its ID
-      operationId: GetThingByID
+      operationId: GetThing
       security:
         - basic: []
         - bearer: []
@@ -176,7 +200,7 @@ paths:
       tags:
         - things
       summary: Update Thing
-      operationId: UpdateThingByID
+      operationId: UpdateThing
       security:
         - basic: []
         - bearer: []
@@ -372,9 +396,6 @@ paths:
           type: string
           format: date-time
         - $ref: '#/parameters/perPage'
-      produces:
-        - application/json
-        - text/csv
       responses:
         '200':
           description: Success
@@ -405,17 +426,57 @@ paths:
                     type: string
                     enum:
                       - channelType
-                    description: The type of the resource. For things this will always have the value `thingType`.
+                    description: The type of the resource. For chananels this will always have the value `channelType`.
                   attributes:
                     allOf:
                       - $ref: '#/definitions/ChannelAttributes'
                       - $ref: '#/definitions/ChannelReadAttributes'
-          examples:
-            'text/csv': >
-              id,title
-              38,t-shirt
-              
-      
+        '400':
+          $ref: '#/responses/400ErrorResponse'
+        '422':
+          $ref: '#/responses/422ErrorResponse'
+        '500':
+          $ref: '#/responses/500ErrorResponse'
+    patch:
+      tags:
+        - channels
+      summary: Update Channel
+      operationId: UpdateChannel
+      security:
+        - basic: []
+        - bearer: []
+        - api_key: []
+      description: |
+        This endpoint allows the owner of a Thingful resource to send an update for an individual channel. When sending a PATCH request for a channel a client may only send the fields they specifically wish to update, other fields can be omitted. Omitted fields will be left unchanged after the update has completed.
+      parameters:
+        - name: channel
+          in: body
+          description: The incoming channel data to update.
+          required: true
+          schema:
+            type: object
+            properties:
+              data:
+                type: object
+                description: The top level container for the channel data
+                required:
+                  - type
+                  - id
+                  - attributes
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - channelType
+                    description: The type of resource we are updating. For channels this must be `channelType`.
+                  id:
+                    $ref: '#/definitions/ChannelID'
+                  attributes:
+                    $ref: '#/definitions/ChannelAttributes'
+      responses:
+        '200':
+          description: Success
+        
   '/echo':
     post:
       tags:
