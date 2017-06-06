@@ -223,7 +223,15 @@ paths:
         - name: license[permits]
           in: query
           type: string
-          description: Rather than querying by a specific parameter
+          description: This parameter allows clients to search for things that permit certain types of use, where the value of this query parameter is either an expandable JSON-LD property or the complete URL.
+        - name: license[requires]
+          in: query
+          type: string
+          description: This parameter allows clients to search for things that require certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
+        - name: license[prohibits]
+          in: query
+          type: string
+          description: This parameter allows clients to search for things that prohibit certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
       responses:
         '200':
           description: Success
@@ -813,6 +821,8 @@ definitions:
       permits:
         type: array
         description: Array containing a list of permissions that this license grants. These are expressed as JSON-LD expandable properties or fully qualified URLS.
+        items:
+          type: string
         example:
           - "cc:Reproduction"
           - "cc:Distribution"
@@ -820,11 +830,15 @@ definitions:
       requires:
         type: array
         description: Array containing a list of requirements for this license. These are expressed as JSON-LD expandable properties or fully qualified URLS.
+        items:
+          type: string
         example:
           - "cc:Attribution"
       prohibits:
         type: array
         description: Array containing a list of prohibitions for this license. These are expressed as JSON-LD expandable properties or fully qualified URLS.
+        items:
+          type: string
         example:
           - "cc:CommercialUse"
       legalCode:
@@ -852,6 +866,8 @@ definitions:
       domain:
         type: array
         description: The domain of this channel expressed as a JSON-LD expandable property.
+        items:
+          type: string
         example:
           - m3-lite:Weather
           - m3-lite:Environment
