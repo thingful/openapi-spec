@@ -124,7 +124,7 @@ parameters:
     description: |
       This parameter is used to return things of a specific type, i.e. only return connected vehicles. This parameter can only be used for Thing level searches.
   quantityKind:
-    name: quantityKind
+    name: channel[quantityKind]
     in: query
     type: string
     description: |
@@ -132,7 +132,7 @@ parameters:
       
       When this parameter is requested at the Thing level it returns Things where at least one channel measures this quantity kind, but all other channels are returned. When used on the Channel level it only returns channels that measure this quantity kind.
   measuredBy:
-    name: measuredBy
+    name: channel[measuredBy]
     in: query
     type: string
     description: |
@@ -140,7 +140,7 @@ parameters:
       
       When this parameter is requested at the Thing level it returns Things where at least one channel was measured by this sensor type, but all other channels are returned. When used on the Channel level it only returns channels that were measured by this sensor type.
   unit:
-    name: unit
+    name: channel[unit]
     in: query
     type: string
     description: |
@@ -148,7 +148,7 @@ parameters:
   
       When this parameter is requested at the Thing level it returns Things where at least one channel has this unit, but all other channels are returned. When used on the Channel level it only returns channels that have this unit.
   domain:
-    name: domain
+    name: channel[domain]
     in: query
     type: string
     description: |
