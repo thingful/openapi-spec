@@ -46,7 +46,7 @@ tags:
     description: Operations to do with accessing individual thing channels
   - name: search
     description: Search operations
-    
+
 # Security scheme definitions that can be used across the specification.
 securityDefinitions:
   bearer:
@@ -83,7 +83,7 @@ parameters:
     type: boolean
     description: |
       Boolean flag indicating whether or not the client desires Thingful to go and try and retrieve the latest value from the upstream data provider, or just to return the last indexed value currently stored in Thingful's database.
-      
+
       It is an error to set `refresh` to true if the client has supplied any other of the historical time parameters, i.e. `at`, `from` or `to`.
     default: false
   at:
@@ -93,7 +93,7 @@ parameters:
     format: date-time
     description: |
       This parameter is used to hold a RFC3339 timestamp which indicates the instance in time at which the client desires to receive data.
-      
+
       It is an error to specify an `at` value when you also supply `from` and `to` parameters.
   thingID:
     name: thingID
@@ -107,7 +107,7 @@ parameters:
     type: integer
     description: |
       This parameter is used when paging through result sets to control how many results are returned within a single request.
-      
+
       This parameter can be used both within search results and time series queries expressed at the channel level.
     maximum: 1000
     minimum: 1
@@ -129,7 +129,7 @@ parameters:
     type: string
     description: |
       This parameter is used to search for channels that measure a specific quantity kind known to Thingful. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, i.e. `m3-lite:Temperature`.
-      
+
       When this parameter is requested at the Thing level it returns Things where at least one channel measures this quantity kind, but all other channels are returned. When used on the Channel level it only returns channels that measure this quantity kind.
   measuredBy:
     name: channel.measuredBy
@@ -137,7 +137,7 @@ parameters:
     type: string
     description: |
       This parameter is used to search for Channels measured by the sensor type given as the value of this parameter. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, e.g. `m3-lite:Thermometer` or `m3-lite:SoilHumiditySensor`
-      
+
       When this parameter is requested at the Thing level it returns Things where at least one channel was measured by this sensor type, but all other channels are returned. When used on the Channel level it only returns channels that were measured by this sensor type.
   unit:
     name: channel.unit
@@ -145,7 +145,7 @@ parameters:
     type: string
     description: |
       This parameter is used to search for channels that are measured in a specific unit. The value of this field must be either a full URL referencing a unit defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:DegreeCelsius`
-  
+
       When this parameter is requested at the Thing level it returns Things where at least one channel has this unit, but all other channels are returned. When used on the Channel level it only returns channels that have this unit.
   domain:
     name: channel.domain
@@ -153,9 +153,9 @@ parameters:
     type: string
     description: |
       This parameter is used to search for channels that relate to a specific domain of interest. The value of this field must be either a full URL referencing a domain defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:Weather`
-  
+
       When this parameter is requested at the Thing level it returns Things where at least one channel concerns this domain, but all other channels are returned. When used on the Channel level it only returns channels that concern this domain.
-  licenseId: 
+  licenseId:
     name: license.id
     in: query
     type: string
@@ -176,10 +176,10 @@ parameters:
     in: query
     type: string
     description: This parameter allows clients to search for things that prohibit certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
-  
-    
+
+
 # Holds the relative paths to the individual endpoints. The path is appended to the
-# basePath in order to construct the full URL. 
+# basePath in order to construct the full URL.
 paths:
   '/search':
     parameters:
@@ -197,7 +197,7 @@ paths:
         - api_key: []
       description: |
         This endpoint allows clients to issue search requests against the Thingful API to discover IoT resources indexed by Thingful, and made searchable by various geographical and semantic parameters.
-        
+
         Search results include only metadata - they never return observations for a Thing. To see this data a client must then issue an access request directly against the Thing, optionally requesting a refresh of the data at that point.
       parameters:
         - name: lng
@@ -279,7 +279,7 @@ paths:
           $ref: '#/responses/403ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-      
+
   '/things/{thingID}':
     parameters:
       - $ref: '#/parameters/thingID'
@@ -296,7 +296,7 @@ paths:
         - api_key: []
       description: |
         This endpoint returns data for a Thing (an IoT resource) indexed by Thingful. It returns either the latest snapshot of the resource (which may be the latest data available), or a parameter can be specified which asks Thingful to go and fetch the value from the upstream data source "now".
-        
+
         In addition this endpoint also allows data to be retrieved from points in the past for the resource if it is available.
       parameters:
         - $ref: '#/parameters/refresh'
@@ -312,7 +312,7 @@ paths:
           $ref: '#/responses/Thing404ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-          
+
     patch:
       tags:
         - things
@@ -324,8 +324,8 @@ paths:
         - api_key: []
       description: |
         This endpoint allows the owner of a Thingful resource to send an update containing new observations and/or location information to Thingful. When sending a PATCH request for a thing a client may *only* send the fields they specifically wish to update, other fields can be omitted. These omitted fields will be left unchanged after the update has completed.
-        
-        Typically a client might only send over the contained `observations` property for each channel containing new data points to be stored. 
+
+        Typically a client might only send over the contained `observations` property for each channel containing new data points to be stored.
       parameters:
         - name: thing
           in: body
@@ -350,7 +350,7 @@ paths:
                     allOf:
                       - $ref: '#/definitions/ThingAttributes'
                       - $ref: '#/definitions/ThingUpdateAttributes'
-                    
+
       responses:
         '200':
           $ref: '#/responses/ThingSuccessResponse'
@@ -362,7 +362,7 @@ paths:
           $ref: '#/responses/Thing404ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-          
+
   '/things':
     post:
       tags:
@@ -441,7 +441,7 @@ paths:
               description: The location of the newly created Thing resource
               type: string
               format: url
-  
+
   '/things/{thingID}/channels/{channelID}':
     parameters:
       - $ref: '#/parameters/thingID'
@@ -463,7 +463,7 @@ paths:
         - api_key: []
       description: |
         This endpoint returns data for an individual Channel belonging to a Thing indexed by Thingful. It allows clients to either request the last indexed snapshot of the channel, or if historical data for the channel is available, either a snapshot at a specific instance in time or a range of historical data.
-        
+
         Clients are also able to request that Thingful attempt to go and fetch the latest data for a channel by setting the `refresh` parameter to true.
       parameters:
         - $ref: '#/parameters/refresh'
@@ -472,7 +472,7 @@ paths:
           in: query
           description: |
             This parameter is used to specify the start point of a time interval for which the client wishes to obtain data. It is expressed as an RFC3339 timestamp.
-            
+
             It is an error to request both a range (using `from` and `to`) and a specific instance (using `at`).
           type: string
           format: date-time
@@ -480,9 +480,9 @@ paths:
           in: query
           description: |
             This parameter is used to specify the end point of a time interval for which the client wishes to obtain data. It is expressed as an RFC3339 timestamp.
-            
+
             It is an error to request both a range (using `from` and `to`) and a specific instance (using `at`).
-            
+
             It is also an error to specify a `to` value without a corresponding `from` timestamp, however you **may** request a `from` timestamp without a corresponding `to`, as in this case `to` defaults to the current time.
           type: string
           format: date-time
@@ -549,8 +549,8 @@ paths:
           $ref: '#/responses/422ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-           
-              
+
+
 # An object to hold data types that can be consumed and produced by operations.
 # These data types can be primitives, arrays or models.
 definitions:
@@ -558,14 +558,14 @@ definitions:
     description: The ID of the Thing
     type: string
     example: https://api.thingful.net/things/bj7ajg91
-    
+
   ThingType:
     description: Type definition for Thing resources. Must have the value `thingType`.
     type: string
     example: thingType
     enum:
       - thingType
-  
+
   ThingAttributes:
     description: The core attributes of a Thing resource
     type: object
@@ -620,7 +620,7 @@ definitions:
           allOf:
             - $ref: '#/definitions/ChannelIDAttributes'
             - $ref: '#/definitions/ChannelMetadataAttributes'
-            
+
   ThingSearchAttributes:
     type: object
     properties:
@@ -636,7 +636,7 @@ definitions:
             - $ref: '#/definitions/ChannelMetadataAttributes'
             - $ref: '#/definitions/ChannelDataTypeAttributes'
             - $ref: '#/definitions/ChannelHistoricalAttributes'
-            
+
   ThingAccessAttributes:
     type: object
     properties:
@@ -653,7 +653,7 @@ definitions:
             - $ref: '#/definitions/ChannelDataTypeAttributes'
             - $ref: '#/definitions/ChannelObservationAttributes'
             - $ref: '#/definitions/ChannelHistoricalAttributes'
-            
+
   ThingCreateAttributes:
     type: object
     properties:
@@ -669,7 +669,7 @@ definitions:
             - $ref: '#/definitions/ChannelMetadataAttributes'
             - $ref: '#/definitions/ChannelDataTypeAttributes'
             - $ref: '#/definitions/ChannelObservationAttributes'
-            
+
   ThingUpdateAttributes:
     type: object
     properties:
@@ -698,7 +698,7 @@ definitions:
         type: string
         example: application/json
         description: The content type of the remote data resource.
-        
+
   Provider:
     type: object
     description: An object containing information about the remote data provider.
@@ -720,7 +720,7 @@ definitions:
         format: url
         example: https://example-weather.net
         description: The website of the remote data provider
-          
+
   Location:
     type: object
     description: Object used to hold location information for a Thing, Channel or Observation.
@@ -747,7 +747,7 @@ definitions:
         format: float
         description: The elevation above sea level, expressed in metres.
         example: 23.9
-        
+
   License:
     type: object
     description: Object used to hold information about the license under which the data for a Thing has been released.
@@ -787,26 +787,26 @@ definitions:
         format: url
         description: Link to the legal definition of the license.
         example: http://creativecommons.org/licenses/by-nc/3.0/legalcode
-          
+
   # Channel definitions
   #----------------------------------------------------------------------
   ChannelID:
     description: The ID of the individual channel
     type: string
     example: https://api.thingful.net/things/bj7ajg91/channels/temperature
-  
+
   ChannelIDAttributes:
     type: object
     properties:
       id:
         $ref: '#/definitions/ChannelID'
-        
+
   ChannelType:
     description: The type of the resource. For channels this will always have the value `channelType`.
     type: string
     enum:
       - channelType
-    
+
   ChannelTypeAttributes:
     type: object
     required:
@@ -814,7 +814,7 @@ definitions:
     properties:
       type:
         $ref: '#/definitions/ChannelType'
-        
+
   ChannelMetadataAttributes:
     type: object
     description: The attributes describing an individual channel within a Thing
@@ -844,7 +844,7 @@ definitions:
         description: Optional array of additional metadata properties for the channel
         items:
           $ref: '#/definitions/Property'
-          
+
   ChannelObservationAttributes:
     type: object
     description: Separate out observations from the rest of the channel as we omit these when searching.
@@ -854,7 +854,7 @@ definitions:
         description: An array containing individual observations for the channel.
         items:
           $ref: '#/definitions/Observation'
-        
+
   ChannelDataTypeAttributes:
     type: object
     properties:
@@ -866,7 +866,7 @@ definitions:
           - thingful:Integer
           - thingful:String
           - thingful:DateTime
-        
+
   ChannelExtraAttributes:
     type: object
     properties:
@@ -876,7 +876,7 @@ definitions:
         $ref: '#/definitions/Provider'
       license:
         $ref: '#/definitions/License'
-        
+
   ChannelHistoricalAttributes:
     type: object
     properties:
@@ -884,7 +884,7 @@ definitions:
         type: boolean
         description: Boolean flag indicating whether or not historical data is available for this individual channel.
         example: false
-        
+
   TimestampAttributes:
     type: object
     required:
@@ -901,7 +901,7 @@ definitions:
         format: date-time
         example: 2017-06-05T11:15:50Z
         description: RFC3339 timestamp representing the time at which the resource was last updated.
-        
+
   Observation:
     type: object
     description: An individual observation for a channel is a single data value recorded at some specific location at some specific time instant.
@@ -920,7 +920,7 @@ definitions:
         type: string
         description: The actual recorded value serialised as a string. The `dataType` property on the parent channel can be used to control the deserialisation of this property should it be required.
         example: '12.9'
-  
+
   Property:
     type: object
     description: A single piece of generic metadata that should be attached to a Thing or Channel. This is used to capture extra metadata that is not already described by explicit properties of the object.
@@ -933,7 +933,7 @@ definitions:
         type: string
         description: The value of the property. This can either be an expandable JSON-LD property, a complete URL describing some specific property, or a string literal.
         example: '42'
-        
+
   Links:
     description: Object that holds links pertaining to the resource or resources currently being requested
     type: object
@@ -943,13 +943,13 @@ definitions:
         format: url
         description: Link containing the URL used to reference the current document
         example: https://api.thingful.net/things/bj7ajg91
-        
+
   Context:
     description: Link to a JSON-LD context semantically describing the returned JSON
     type: string
     format: url
     example: https://thingful.github.io/schema/context/page.ld
-  
+
   #--------------------------------------------------------------------
   # Header definitions
   #--------------------------------------------------------------------
@@ -957,13 +957,13 @@ definitions:
     type: integer # Header value type
     format: int32 # Header value format
     description: calls per hour allowed by the user
-    
+
   X-Expires-After:
     type: string
     format: date-time
     description: date in UTC when token expires
-  
-  #--------------------------------------------------------------------                    
+
+  #--------------------------------------------------------------------
   # Error definitions
   #--------------------------------------------------------------------
   ErrorResponse:
@@ -976,7 +976,7 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Error'
-          
+
   Error:
     description: An error object returned by the API.
     type: object
@@ -1006,7 +1006,7 @@ definitions:
             type: string
             description: A string containing a reference to a specific query parameter that has caused the problem.
             example: lng
-        
+
 responses:
   ThingSuccessResponse:
     description: Success
@@ -1031,7 +1031,7 @@ responses:
                 - $ref: '#/definitions/ThingAttributes'
                 - $ref: '#/definitions/ThingAccessAttributes'
                 - $ref: '#/definitions/TimestampAttributes'
-        
+
   ChannelSuccessResponse:
     description: Success
     schema:
@@ -1071,7 +1071,7 @@ responses:
       'text/csv': >
         id,title
         foo,bar
-                
+
   '500ErrorResponse':
     description: Server Error
     schema:
@@ -1146,4 +1146,4 @@ responses:
             detail: Missing required field
             source:
               pointer: /data/attributes/title
-    
+
