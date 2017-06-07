@@ -549,41 +549,7 @@ paths:
           $ref: '#/responses/422ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-        
-  '/echo':
-    post:
-      tags:
-        - Echo
-      summary: Echo test
-      description: Receive the exact message you've sent
-      operationId: echo
-      parameters:
-        - name: message
-          in: body
-          description: 'Echo payload'
-          required: true
-          schema:
-            type: string
-            example: 'Hello world!'
-      security:
-        - api_key: []
-      responses:
-        '200':
-          description: 'OK'
-          examples:
-            'application/json': 'Hello world!'
-          schema:
-            type: string
-          # docuemnt headers for this repsonse
-          headers:
-            X-Rate-Limit: # Header name
-              type: integer # Header value type
-              format: int32 # Header value format
-              description: calls per hour allowed by the user
-            X-Expires-After:
-              type: string
-              format: date-time
-              description: date in UTC when token expires
+           
               
 # An object to hold data types that can be consumed and produced by operations.
 # These data types can be primitives, arrays or models.
@@ -983,7 +949,21 @@ definitions:
     type: string
     format: url
     example: https://thingful.github.io/schema/context/page.ld
-                      
+  
+  #--------------------------------------------------------------------
+  # Header definitions
+  #--------------------------------------------------------------------
+  X-Rate-Limit: # Header name
+    type: integer # Header value type
+    format: int32 # Header value format
+    description: calls per hour allowed by the user
+    
+  X-Expires-After:
+    type: string
+    format: date-time
+    description: date in UTC when token expires
+  
+  #--------------------------------------------------------------------                    
   # Error definitions
   #--------------------------------------------------------------------
   ErrorResponse:
