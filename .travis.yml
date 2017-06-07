@@ -13,3 +13,5 @@ deploy:
     on:
       all_branches: true
       condition: '"$TRAVIS_BRANCH" != "master" && "$TRAVIS_BRANCH" != "gh-pages"'
+notifications:
+  slack: thingful:1X9OpFzHUf1i7Y9lPyHoNGld
