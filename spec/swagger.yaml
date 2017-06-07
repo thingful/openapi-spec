@@ -71,12 +71,14 @@ parameters:
     name: Authorization
     in: header
     type: string
-    description: Standard Authorization header; token must be sent using the `Bearer` format.
+    description: |
+      Standard Authorization header; if used then token must be sent using the `Bearer` format, e.g. `Authorization: Bearer <token>`.
   apiKey:
     name: key
     in: query
     type: string
-    description: For clients unable to send HTTP headers, they may also send their authorization token via a query parameter.
+    description: |
+      For clients unable to send HTTP headers, they may also send their authorization token via this query parameter. This method of authentication is not recommended, as it can lead to credentials appearing in server logs.
   refresh:
     name: refresh
     in: query
@@ -160,7 +162,7 @@ parameters:
     in: query
     type: string
     format: url
-    description: The full URL to a license type known to Thingful
+    description: The full URL to a license known to Thingful.
   licensePermits:
     name: license.permits
     in: query
@@ -170,12 +172,52 @@ parameters:
     name: license.requires
     in: query
     type: string
-    description: This parameter allows clients to search for things that require certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
+    description: |
+      This parameter allows clients to search for things that require certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
+      
+      To negate this parameter you can add an `!` before the value, that is say you wanted to search for resources that **DO NOT** require attribution use then this could be expressed as: `license.requires=!cc:Attribution`
   licenseProhibits:
     name: license.prohibits
     in: query
     type: string
-    description: This parameter allows clients to search for things that prohibit certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
+    description: |
+      This parameter allows clients to search for things that prohibit certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.
+      
+      To negate this parameter you can add an `!` before the value, that is say you wanted to search for resources that **DO NOT** prohibit commercial use then this could be expressed as: `license.prohibits=!cc:CommercialUse`
+  longitude:
+    name: long
+    in: query
+    description: Longitude of a point around which to search
+    type: number
+    format: float
+    maximum: 180
+    minimum: -180
+  latitude:
+    name: lat
+    in: query
+    description: Latitude of a point around which to search
+    type: number
+    format: float
+    maximum: 90
+    minimum: -90
+  radius:
+    name: radius
+    in: query
+    description: Radius in metres defining the search area around the point specified by `lng` and `lat`
+    type: number
+    format: float
+    minimum: 0
+    maximum: 10000
+  sort:
+    name: sort
+    in: query
+    description: |
+      Specify how results should be sorted, either lexicographically by ID, or by distance from the specified search location. It is an error to specify a sort of `distance` if no geographical location has been specified for the current request.
+    type: string
+    enum:
+      - id
+      - distance
+    default: id
 
 
 # Holds the relative paths to the individual endpoints. The path is appended to the
@@ -200,36 +242,11 @@ paths:
 
         Search results include only metadata - they never return observations for a Thing. To see this data a client must then issue an access request directly against the Thing, optionally requesting a refresh of the data at that point.
       parameters:
-        - name: lng
-          in: query
-          description: Longitude of a point around which to search
-          type: number
-          format: float
-          maximum: 180
-          minimum: -180
-        - name: lat
-          in: query
-          description: Latitude of a point around which to search
-          type: number
-          format: float
-          maximum: 90
-          minimum: -90
-        - name: radius
-          in: query
-          description: Radius in metres defining the search area around the point specified by `lng` and `lat`
-          type: number
-          format: float
-          minimum: 0
-          maximum: 10000
+        - $ref: '#/parameters/longitude'
+        - $ref: '#/parameters/latitude'
+        - $ref: '#/parameters/radius'
         - $ref: '#/parameters/perPage'
-        - name: sort
-          in: query
-          description: Specify how results should be sorted, either by distance or by score
-          type: string
-          enum:
-            - score
-            - distance
-          default: distance
+        - $ref: '#/parameters/sort'
         - $ref: '#/parameters/nextCursor'
         - $ref: '#/parameters/thingType'
         - $ref: '#/parameters/quantityKind'
@@ -549,6 +566,47 @@ paths:
           $ref: '#/responses/422ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
+          
+  '/search/channels':
+    parameters:
+      - $ref: '#/parameters/authorizationHeader'
+      - $ref: '#/parameters/apiKey'
+    get:
+      tags:
+        - search
+        - channels
+      summary: Search Channels
+      operationId: searchChannels
+      security:
+        - basic: []
+        - bearer: []
+        - api_key: []
+      description: |
+        This endpoint allows clients to issue search requests against the Thingful API to discover specific channels on IoT resource indexed by Thingful, where they are searchable be various geographical and semantic parameters.
+        
+        Search results include only metadata - they never return observations for a Channel. To this data a client must then issue an access request to any channels of interest, optionally requesting a refresh of the data at that point.
+        
+        In addition for channels a client may issue a historical request for ranges of time series data for a specific channel once they have used search in order to discover it.
+      parameters:
+        - $ref: '#/parameters/longitude'
+        - $ref: '#/parameters/latitude'
+        - $ref: '#/parameters/radius'
+        - $ref: '#/parameters/perPage'
+        - $ref: '#/parameters/sort'
+        - $ref: '#/parameters/nextCursor'
+        - $ref: '#/parameters/thingType'
+        - $ref: '#/parameters/quantityKind'
+        - $ref: '#/parameters/measuredBy'
+        - $ref: '#/parameters/unit'
+        - $ref: '#/parameters/domain'
+        - $ref: '#/parameters/licenseId'
+        - $ref: '#/parameters/licensePermits'
+        - $ref: '#/parameters/licenseRequires'
+        - $ref: '#/parameters/licenseProhibits'
+      responses:
+        '200':
+          description: Success
+      
 
 
 # An object to hold data types that can be consumed and produced by operations.
