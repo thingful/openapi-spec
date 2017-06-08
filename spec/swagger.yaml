@@ -168,7 +168,7 @@ parameters:
     description: Radius in metres defining the search area around the point specified by `long` and `lat`
     type: number
     format: float
-    minimum: 0
+    minimum: 10
     maximum: 10000
   sort:
     name: sort
