@@ -1052,6 +1052,11 @@ definitions:
         format: date-time
         example: 2017-06-05T11:15:50Z
         description: RFC3339 timestamp representing the time at which the resource was last updated.
+      updateInterval:
+        type: number
+        format: integer
+        example: 900
+        description: Duration in seconds indicating the update frequency of the resource. This update frequency is derived from the data provider, but is purely advisory.
 
   Observation:
     type: object
