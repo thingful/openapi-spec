@@ -514,6 +514,8 @@ paths:
         Clients are also able to request that Thingful attempt to go and fetch the latest data for a channel by setting the `refresh` parameter to true.
       parameters:
         - $ref: '#/parameters/refresh'
+        - $ref: '#/parameters/from'
+        - $ref: '#/parameters/to'
       responses:
         '200':
           $ref: '#/responses/ChannelSuccessResponse'
@@ -711,11 +713,11 @@ definitions:
     example: https://api.thingful.net/things/bj7ajg91
 
   ThingType:
-    description: Type definition for Thing resources. Must have the value `thingType`.
+    description: Type definition for Thing resources. Must have the value `thing`.
     type: string
-    example: thingType
+    example: thing
     enum:
-      - thingType
+      - thing
 
   ThingAttributes:
     description: The core attributes of a Thing resource
@@ -953,10 +955,10 @@ definitions:
         $ref: '#/definitions/ChannelID'
 
   ChannelType:
-    description: The type of the resource. For channels this will always have the value `channelType`.
+    description: The type of the resource. For channels this will always have the value `channel`.
     type: string
     enum:
-      - channelType
+      - channel
 
   ChannelTypeAttributes:
     type: object
