@@ -271,7 +271,7 @@ paths:
                   self:
                     type: string
                     format: url
-                    example: http://api.thingful.net/search?domain=m3-lite:Weather
+                    example: http://api.thingful.net/search?channels.domain=m3-lite:Weather
                   next:
                     type: string
                     format: url
@@ -285,6 +285,11 @@ paths:
                       $ref: '#/definitions/ThingID'
                     type:
                       $ref: '#/definitions/ThingType'
+                    links:
+                      type: object
+                      properties:
+                        self:
+                          $ref: '#/definitions/ThingID'
                     attributes:
                       allOf:
                         - $ref: '#/definitions/ThingAttributes'
@@ -439,8 +444,6 @@ paths:
                 type: object
                 description: Container for the created Thing resource
                 properties:
-                  '@context':
-                    $ref: '#/definitions/Context'
                   id:
                     $ref: '#/definitions/ThingID'
                   type:
@@ -458,6 +461,7 @@ paths:
               description: The location of the newly created Thing resource
               type: string
               format: url
+            
 
   '/things/{thingID}/channels/{channelID}':
     parameters:
@@ -606,6 +610,38 @@ paths:
       responses:
         '200':
           description: Success
+          schema:
+            type: object
+            properties:
+              '@context':
+                $ref: '#/definitions/Context'
+              links:
+                type: object
+                properties:
+                  self:
+                    type: string
+                    format: url
+                    example: http://api.thingful.net/search/channels?domain=m3-lite:Weather
+                  next:
+                    type: string
+                    format: url
+                    example: https://api.thingful.net/search/channels?domain=m3-lite:Weather&nextCursor=sb7td6gd
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      $ref: '#/definitions/ChannelID'
+                    type:
+                      $ref: '#/definitions/ChannelType'
+                    attributes:
+                      type: object
+                      allOf:
+                        - $ref: '#/definitions/ChannelMetadataAttributes'
+                        - $ref: '#/definitions/ChannelDataTypeAttributes'
+                        - $ref: '#/definitions/ChannelExtraAttributes'
+                        - $ref: '#/definitions/TimestampAttributes'
       
 
 
@@ -1006,7 +1042,7 @@ definitions:
     description: Link to a JSON-LD context semantically describing the returned JSON
     type: string
     format: url
-    example: https://thingful.github.io/schema/context/page.ld
+    example: https://thingful.github.io/schema/context/context.ld
 
   #--------------------------------------------------------------------
   # Header definitions
