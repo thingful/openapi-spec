@@ -198,6 +198,44 @@ parameters:
       If a client requests an interval greater than the currently defined maximum we return a 400 error response to the client with an error message detailing the problem.
     type: string
     format: date-time
+  quantityKind:
+    name: channel.quantityKind
+    in: query
+    type: string
+    description: |
+      This parameter is used to search for channels that measure a specific quantity kind known to Thingful. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, i.e. `m3-lite:Temperature`.
+
+      When this parameter is requested at the Thing level it returns Things where at least one channel measures this quantity kind, but all other channels are returned. When used on the Channel level it only returns channels that measure this quantity kind.
+      
+      The complete list of available quantity kinds can be found via our ontology explorer.
+  measuredBy:
+    name: channel.measuredBy
+    in: query
+    type: string
+    description: |
+      This parameter is used to search for Channels measured by the sensor type given as the value of this parameter. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, e.g. `m3-lite:Thermometer` or `m3-lite:SoilHumiditySensor`
+
+      When this parameter is requested at the Thing level it returns Things where at least one channel was measured by this sensor type, but all other channels are returned. When used on the Channel level it only returns channels that were measured by this sensor type.
+      
+      The complete list of available sensor types can be found via our ontology explorer.
+  unit:
+    name: channel.unit
+    in: query
+    type: string
+    description: |
+      This parameter is used to search for channels that are measured in a specific unit. The value of this field must be either a full URL referencing a unit defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:DegreeCelsius`
+
+      When this parameter is requested at the Thing level it returns Things where at least one channel has this unit, but all other channels are returned. When used on the Channel level it only returns channels that have this unit.
+      
+      A complete list of available units can be found via our ontology explorer.
+  domain:  
+    name: channel.domain
+    in: query
+    type: string
+    description: |
+      This parameter is used to search for channels that relate to a specific domain of interest. The value of this field must be either a full URL referencing a domain defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:Weather`
+
+      When this parameter is requested at the Thing level it returns Things where at least one channel concerns this domain, but all other channels are returned. When used on the Channel level it only returns channels that concern this domain.
 
 
 # Holds the relative paths to the individual endpoints. The path is appended to the
@@ -243,40 +281,10 @@ paths:
             - thingful:ConnectedDevice
             - thingful:ConnectedVehicle
             - thingful:TransportationNode
-        - name: channel.quantityKind
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for channels that measure a specific quantity kind known to Thingful. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, i.e. `m3-lite:Temperature`.
-
-            When this parameter is requested at the Thing level it returns Things where at least one channel measures this quantity kind, but all other channels are returned. When used on the Channel level it only returns channels that measure this quantity kind.
-      
-            The complete list of available quantity kinds can be found via our ontology explorer.
-        - name: channel.measuredBy
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for Channels measured by the sensor type given as the value of this parameter. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, e.g. `m3-lite:Thermometer` or `m3-lite:SoilHumiditySensor`
-
-            When this parameter is requested at the Thing level it returns Things where at least one channel was measured by this sensor type, but all other channels are returned. When used on the Channel level it only returns channels that were measured by this sensor type.
-      
-            The complete list of available sensor types can be found via our ontology explorer.
-        - name: channel.unit
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for channels that are measured in a specific unit. The value of this field must be either a full URL referencing a unit defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:DegreeCelsius`
-
-            When this parameter is requested at the Thing level it returns Things where at least one channel has this unit, but all other channels are returned. When used on the Channel level it only returns channels that have this unit.
-      
-            A complete list of available units can be found via our ontology explorer.
-        - name: channel.domain
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for channels that relate to a specific domain of interest. The value of this field must be either a full URL referencing a domain defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:Weather`
-
-            When this parameter is requested at the Thing level it returns Things where at least one channel concerns this domain, but all other channels are returned. When used on the Channel level it only returns channels that concern this domain.
+        - $ref: '#/parameters/quantityKind'
+        - $ref: '#/parameters/measuredBy'
+        - $ref: '#/parameters/unit'
+        - $ref: '#/parameters/domain'
       responses:
         '200':
           description: Success
@@ -609,42 +617,10 @@ paths:
         - $ref: '#/parameters/licensePermits'
         - $ref: '#/parameters/licenseRequires'
         - $ref: '#/parameters/licenseProhibits'
-        - name: quantityKind
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for channels that measure a specific quantity kind known to Thingful. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, i.e. `m3-lite:Temperature`.
-
-            Returns only channels that measure this quantity kind.
-      
-            The complete list of available quantity kinds can be found via our ontology explorer.
-        - name: measuredBy
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for Channels measured by the sensor type given as the value of this parameter. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, e.g. `m3-lite:Thermometer` or `m3-lite:SoilHumiditySensor`
-
-            Returns only channels that were measured by this sensor type.
-      
-            The complete list of available sensor types can be found via our ontology explorer.
-        - name: unit
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for channels that are measured in a specific unit. The value of this field must be either a full URL referencing a unit defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:DegreeCelsius`
-
-            Returns only channels that have this unit.
-      
-            A complete list of available units can be found via our ontology explorer.
-        - name: domain
-          in: query
-          type: string
-          description: |
-            This parameter is used to search for channels that relate to a specific domain of interest. The value of this field must be either a full URL referencing a domain defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:Weather`
-
-            Returns only  channels that concern this domain.
-            
-            A complete list of available domains can be found via our ontology explorer.
+        - $ref: '#/parameters/quantityKind'
+        - $ref: '#/parameters/measuredBy'
+        - $ref: '#/parameters/unit'
+        - $ref: '#/parameters/domain'
       responses:
         '200':
           description: Success
