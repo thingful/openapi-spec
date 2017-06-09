@@ -717,6 +717,10 @@ definitions:
           - thingful:Closed
         example: thingful:Shared
         description: An expandable JSON-LD property representing how Thingful classifies the resource in terms of the ODI's data classification hierarchy.
+      webpage:
+        type: string
+        format: url
+        description: URL to a human intelligible page about the thing. This may or may not be a unique page pertaining to this specific resource as often data providers don't provide such a unique resource. In that case this may be a link to a page describing the type of resource it is, or just a link to the main home page of the data provider.
       provider:
         $ref: '#/definitions/Provider'
       category:
