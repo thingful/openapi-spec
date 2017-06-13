@@ -206,7 +206,7 @@ parameters:
       This parameter is used to search for channels that measure a specific quantity kind known to Thingful. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, i.e. `m3-lite:Temperature`.
 
       When this parameter is requested at the Thing level it returns Things where at least one channel measures this quantity kind, but all other channels are returned. When used on the Channel level it only returns channels that measure this quantity kind.
-      
+
       The complete list of available quantity kinds can be found via our ontology explorer.
   measuredBy:
     name: channel.measuredBy
@@ -216,7 +216,7 @@ parameters:
       This parameter is used to search for Channels measured by the sensor type given as the value of this parameter. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, e.g. `m3-lite:Thermometer` or `m3-lite:SoilHumiditySensor`
 
       When this parameter is requested at the Thing level it returns Things where at least one channel was measured by this sensor type, but all other channels are returned. When used on the Channel level it only returns channels that were measured by this sensor type.
-      
+
       The complete list of available sensor types can be found via our ontology explorer.
   unit:
     name: channel.unit
@@ -226,9 +226,9 @@ parameters:
       This parameter is used to search for channels that are measured in a specific unit. The value of this field must be either a full URL referencing a unit defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:DegreeCelsius`
 
       When this parameter is requested at the Thing level it returns Things where at least one channel has this unit, but all other channels are returned. When used on the Channel level it only returns channels that have this unit.
-      
+
       A complete list of available units can be found via our ontology explorer.
-  domain:  
+  domain:
     name: channel.domain
     in: query
     type: string
@@ -492,7 +492,7 @@ paths:
               description: The location of the newly created Thing resource
               type: string
               format: url
-            
+
 
   '/things/{thingID}/channels/{channelID}':
     parameters:
@@ -516,7 +516,7 @@ paths:
         - api_key: []
       description: |
         This endpoint returns data for an individual Channel belonging to a Thing indexed by Thingful. It allows clients to either request the last indexed snapshot of the channel, or historical data for the channel for a specified time interval.
-        
+
         When requesting historical data the maximum time interval that can be requested is currently 10 days though this value is liable to change at any time. We return all available observations for the given time interval.
 
         Clients are also able to request that Thingful attempt to go and fetch the latest data for a channel by setting the `refresh` parameter to true.
@@ -535,55 +535,7 @@ paths:
           $ref: '#/responses/404ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-    patch:
-      tags:
-        - channels
-      summary: Update Channel
-      operationId: updateChannel
-      security:
-        - basic: []
-        - bearer: []
-        - api_key: []
-      description: |
-        This endpoint allows the owner of a Thingful resource to send an update for an individual channel. When sending a PATCH request for a channel a client may only send the fields they specifically wish to update, other fields can be omitted. Omitted fields will be left unchanged after the update has completed.
-      parameters:
-        - name: channel
-          in: body
-          description: The incoming channel data to update.
-          required: true
-          schema:
-            type: object
-            properties:
-              data:
-                type: object
-                description: The top level container for the channel data
-                required:
-                  - type
-                  - id
-                  - attributes
-                properties:
-                  id:
-                    $ref: '#/definitions/ChannelID'
-                  type:
-                    $ref: '#/definitions/ChannelType'
-                  attributes:
-                    allOf:
-                      - $ref: '#/definitions/ChannelMetadataAttributes'
-                      - $ref: '#/definitions/ChannelObservationAttributes'
-      responses:
-        '200':
-          $ref: '#/responses/ChannelSuccessResponse'
-        '400':
-          $ref: '#/responses/400ErrorResponse'
-        '403':
-          $ref: '#/responses/403ErrorResponse'
-        '404':
-          $ref: '#/responses/404ErrorResponse'
-        '422':
-          $ref: '#/responses/422ErrorResponse'
-        '500':
-          $ref: '#/responses/500ErrorResponse'
-          
+
   '/search/channels':
     parameters:
       - $ref: '#/parameters/authorizationHeader'
@@ -601,9 +553,9 @@ paths:
         - api_key: []
       description: |
         This endpoint allows clients to issue search requests against the Thingful API to discover specific channels on IoT resource indexed by Thingful, where they are searchable be various geographical and semantic parameters.
-        
+
         Search results include only metadata - they never return observations for a Channel. To this data a client must then issue an access request to any channels of interest, optionally requesting a refresh of the data at that point.
-        
+
         In addition for channels a client may issue a historical request for ranges of time series data for a specific channel once they have used search in order to discover it.
       parameters:
         - $ref: '#/parameters/longitude'
@@ -668,14 +620,14 @@ paths:
               type: integer
             X-RateLimit-Rest:
               description: The number of seconds left in the current time period.
-              type: integer  
+              type: integer
         '401':
           $ref: '#/responses/401ErrorResponse'
         '403':
           $ref: '#/responses/403ErrorResponse'
         '500':
           $ref: '#/responses/500ErrorResponse'
-      
+
 
 
 # An object to hold data types that can be consumed and produced by operations.
@@ -1164,7 +1116,7 @@ responses:
         type: integer
       X-RateLimit-Rest:
         description: The number of seconds left in the current time period.
-        type: integer  
+        type: integer
 
   ChannelSuccessResponse:
     description: Success
@@ -1214,7 +1166,7 @@ responses:
       X-RateLimit-Rest:
         description: The number of seconds left in the current time period.
         type: integer
-        
+
 
   '500ErrorResponse':
     description: Server Error
