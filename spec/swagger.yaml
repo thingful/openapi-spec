@@ -174,11 +174,16 @@ parameters:
     name: sort
     in: query
     description: |
-      Specify how results should be sorted, either lexicographically by ID, or by distance from the specified search location. It is an error to specify a sort of `distance` if no geographical location has been specified for the current request.
+      Specify how results should be sorted, either ordered by how recently the resource was last updated, or by distance from the specified search location, or if a full text query has been specified using the `q` parameter by a score value indicating how good a match for the search request the resource is.
+
+      It is an error to specify a sort of `distance` if no geographical location has been specified for the current request.
+
+      It is an error to specify a sort of `score` if no full text search query has been specified for the current request.
     type: string
     enum:
-      - id
+      - lastUpdated
       - distance
+      - score
     default: id
   from:
     name: from
@@ -236,6 +241,12 @@ parameters:
       This parameter is used to search for channels that relate to a specific domain of interest. The value of this field must be either a full URL referencing a domain defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:Weather`
 
       When this parameter is requested at the Thing level it returns Things where at least one channel concerns this domain, but all other channels are returned. When used on the Channel level it only returns channels that concern this domain.
+  query:
+    name: q
+    in: query
+    type: string
+    description: |
+      This parameter is used to supply a full text search parameter which attempts to find things containing this value somewhere in their title or description.
 
 
 # Holds the relative paths to the individual endpoints. The path is appended to the
@@ -261,6 +272,7 @@ paths:
 
         Search results include only metadata - they never return observations for a Thing. To see this data a client must then issue an access request directly against the Thing, optionally requesting a refresh of the data at that point.
       parameters:
+        - $ref: '#/parameters/query'
         - $ref: '#/parameters/longitude'
         - $ref: '#/parameters/latitude'
         - $ref: '#/parameters/radius'
@@ -446,8 +458,8 @@ paths:
                   type:
                     type: string
                     enum:
-                      - thingType
-                    description: The type of resource we are updating. For things this must be `thingType`.
+                      - thingful:Thing
+                    description: The type of resource we are updating. For things this must be `thingful:Thing`.
                   attributes:
                     allOf:
                       - $ref: '#/definitions/ThingAttributes'
@@ -480,8 +492,8 @@ paths:
                   type:
                     type: string
                     enum:
-                      - thingType
-                    description: The type of the resource. For things this will always have the value `thingType`.
+                      - thingful:Thing
+                    description: The type of the resource. For things this will always have the value `thingful:Thing`.
                   attributes:
                     allOf:
                       - $ref: '#/definitions/ThingAttributes'
@@ -641,9 +653,9 @@ definitions:
   ThingType:
     description: Type definition for Thing resources. Must have the value `thing`.
     type: string
-    example: thing
+    example: thingful:Thing
     enum:
-      - thing
+      - thingful:Thing
 
   ThingAttributes:
     description: The core attributes of a Thing resource
@@ -888,7 +900,7 @@ definitions:
     description: The type of the resource. For channels this will always have the value `channel`.
     type: string
     enum:
-      - channel
+      - thingful:Channel
 
   ChannelTypeAttributes:
     type: object
