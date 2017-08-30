@@ -61,10 +61,6 @@ securityDefinitions:
     type: apiKey
     in: query # Where API key will be passed: header or query
     name: key # API key paramteer name
-  basic:
-    description: |
-      Clients may also send their username and password via HTTP Basic authentication to authenticate themselves.
-    type: basic
 
 parameters:
   authorizationHeader:
@@ -184,7 +180,7 @@ parameters:
       - lastUpdated
       - distance
       - score
-    default: id
+    default: lastUpdated
   from:
     name: from
     in: query
@@ -264,7 +260,6 @@ paths:
       summary: Search Things
       operationId: searchThings
       security:
-        - basic: []
         - bearer: []
         - api_key: []
       description: |
@@ -354,7 +349,6 @@ paths:
       summary: Get a Thing by ID
       operationId: getThing
       security:
-        - basic: []
         - bearer: []
         - api_key: []
       description: |
@@ -383,7 +377,6 @@ paths:
       summary: Update Thing
       operationId: updateThing
       security:
-        - basic: []
         - bearer: []
         - api_key: []
       description: |
@@ -436,7 +429,6 @@ paths:
       description: |
         This endpoint allows a user with sufficient permissions to create a new Thing instance within Thingful's database.
       security:
-        - basic: []
         - bearer: []
         - api_key: []
       parameters:
@@ -523,7 +515,6 @@ paths:
       summary: Get a Channel by ID
       operationId: getChannel
       security:
-        - basic: []
         - bearer: []
         - api_key: []
       description: |
@@ -560,7 +551,6 @@ paths:
       summary: Search Channels
       operationId: searchChannels
       security:
-        - basic: []
         - bearer: []
         - api_key: []
       description: |
