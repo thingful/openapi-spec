@@ -1,0 +1,1698 @@
+{
+  "swagger": "2.0",
+  "schemes": [
+    "https"
+  ],
+  "host": "api.thingful.net",
+  "basePath": "/",
+  "info": {
+    "description": "Thingful.net API documentation - design document.\n\n**This draft of the documentation is a design proposal, and is not currently deployed, though it is under development.**\n",
+    "version": "2017.06.05",
+    "title": "Thingful",
+    "termsOfService": "https://thingful.net/site/tos/",
+    "contact": {
+      "email": "support@thingful.net",
+      "url": "https://thingful.net/site/contact"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "x-logo": {
+      "url": "logo.png"
+    }
+  },
+  "produces": [
+    "application/json",
+    "text/csv"
+  ],
+  "consumes": [
+    "application/json",
+    "text/csv"
+  ],
+  "tags": [
+    {
+      "name": "things",
+      "description": "Operations to do with discovering and accessing IoT resources."
+    },
+    {
+      "name": "channels",
+      "description": "Operations to do with accessing individual thing channels"
+    },
+    {
+      "name": "search",
+      "description": "Search operations"
+    }
+  ],
+  "securityDefinitions": {
+    "bearer": {
+      "description": "This scheme relies on authenticating users by having them present a standard `Authorization` header containing the value `Bearer` followed by their API key.\n",
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    },
+    "api_key": {
+      "description": "For clients unable to send request headers, they may also authenticate themselves by sending their API key via a query parameter.\n",
+      "type": "apiKey",
+      "in": "query",
+      "name": "key"
+    },
+    "basic": {
+      "description": "Clients may also send their username and password via HTTP Basic authentication to authenticate themselves.\n",
+      "type": "basic"
+    }
+  },
+  "parameters": {
+    "authorizationHeader": {
+      "name": "Authorization",
+      "in": "header",
+      "type": "string",
+      "description": "Standard Authorization header; if used then token must be sent using the `Bearer` format, e.g. `Authorization: Bearer <token>`.\n"
+    },
+    "apiKey": {
+      "name": "key",
+      "in": "query",
+      "type": "string",
+      "description": "For clients unable to send HTTP headers, they may also send their authorization token via this query parameter. This method of authentication is not recommended, as it can lead to credentials appearing in server logs.\n"
+    },
+    "refresh": {
+      "name": "refresh",
+      "in": "query",
+      "type": "boolean",
+      "description": "Boolean flag indicating whether or not the client desires Thingful to go and try and retrieve the latest value from the upstream data provider, or just to return the last indexed value currently stored in Thingful's database.\n\nIt is an error to set `refresh` to true if the client has supplied any other of the historical time parameters, i.e. `at`, `from` or `to`.\n",
+      "default": false
+    },
+    "at": {
+      "name": "at",
+      "in": "query",
+      "type": "string",
+      "format": "date-time",
+      "description": "This parameter is used to hold a RFC3339 timestamp which indicates the instance in time at which the client desires to receive data.\n\nIt is an error to specify an `at` value when you also supply `from` and `to` parameters.\n"
+    },
+    "thingID": {
+      "name": "thingID",
+      "in": "path",
+      "description": "The ID of the Thing",
+      "required": true,
+      "type": "string"
+    },
+    "perPage": {
+      "name": "perPage",
+      "in": "query",
+      "type": "integer",
+      "description": "This parameter is used when paging through result sets to control how many results are returned within a single request.\n\nThis parameter can be used both within search results and time series queries expressed at the channel level.\n",
+      "maximum": 1000,
+      "minimum": 1
+    },
+    "nextCursor": {
+      "name": "nextCursor",
+      "in": "query",
+      "type": "string",
+      "description": "For all result sets for which we can paginate through, this parameter is used to request the next page of results form within the complete result set. Clients should not assume they can calculate the value of this parameter, instead they should use the value for this parameter as supplied from the server back to the client in the form of the `links` property on all paginated result sets.\n"
+    },
+    "thingType": {
+      "name": "thingType",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter is used to return things of a specific type, i.e. only return connected vehicles. This parameter can only be used for Thing level searches.\n"
+    },
+    "quantityKind": {
+      "name": "channel.quantityKind",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter is used to search for channels that measure a specific quantity kind known to Thingful. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, i.e. `m3-lite:Temperature`.\n\nWhen this parameter is requested at the Thing level it returns Things where at least one channel measures this quantity kind, but all other channels are returned. When used on the Channel level it only returns channels that measure this quantity kind.\n"
+    },
+    "measuredBy": {
+      "name": "channel.measuredBy",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter is used to search for Channels measured by the sensor type given as the value of this parameter. The value of this field must either be a full URL referencing a quantiy kind defined in one of the ontologies imported by Thingful, or it can be a JSON-LD expandable property, e.g. `m3-lite:Thermometer` or `m3-lite:SoilHumiditySensor`\n\nWhen this parameter is requested at the Thing level it returns Things where at least one channel was measured by this sensor type, but all other channels are returned. When used on the Channel level it only returns channels that were measured by this sensor type.\n"
+    },
+    "unit": {
+      "name": "channel.unit",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter is used to search for channels that are measured in a specific unit. The value of this field must be either a full URL referencing a unit defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:DegreeCelsius`\n\nWhen this parameter is requested at the Thing level it returns Things where at least one channel has this unit, but all other channels are returned. When used on the Channel level it only returns channels that have this unit.\n"
+    },
+    "domain": {
+      "name": "channel.domain",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter is used to search for channels that relate to a specific domain of interest. The value of this field must be either a full URL referencing a domain defined in one of the ontologies Thingful imports, or it can be expressed as a JSON-LD expandable property, i.e. `m3-lite:Weather`\n\nWhen this parameter is requested at the Thing level it returns Things where at least one channel concerns this domain, but all other channels are returned. When used on the Channel level it only returns channels that concern this domain.\n"
+    },
+    "licenseId": {
+      "name": "license.id",
+      "in": "query",
+      "type": "string",
+      "format": "url",
+      "description": "The full URL to a license known to Thingful."
+    },
+    "licensePermits": {
+      "name": "license.permits",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter allows clients to search for things that permit certain types of use, where the value of this query parameter is either an expandable JSON-LD property or the complete URL."
+    },
+    "licenseRequires": {
+      "name": "license.requires",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter allows clients to search for things that require certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.\n\nTo negate this parameter you can add an `!` before the value, that is say you wanted to search for resources that **DO NOT** require attribution use then this could be expressed as: `license.requires=!cc:Attribution`\n"
+    },
+    "licenseProhibits": {
+      "name": "license.prohibits",
+      "in": "query",
+      "type": "string",
+      "description": "This parameter allows clients to search for things that prohibit certain behaviours, where the value this parameter is either an expandable JSON-LD property or the complete URL.\n\nTo negate this parameter you can add an `!` before the value, that is say you wanted to search for resources that **DO NOT** prohibit commercial use then this could be expressed as: `license.prohibits=!cc:CommercialUse`\n"
+    },
+    "longitude": {
+      "name": "long",
+      "in": "query",
+      "description": "Longitude of a point around which to search",
+      "type": "number",
+      "format": "float",
+      "maximum": 180,
+      "minimum": -180
+    },
+    "latitude": {
+      "name": "lat",
+      "in": "query",
+      "description": "Latitude of a point around which to search",
+      "type": "number",
+      "format": "float",
+      "maximum": 90,
+      "minimum": -90
+    },
+    "radius": {
+      "name": "radius",
+      "in": "query",
+      "description": "Radius in metres defining the search area around the point specified by `lng` and `lat`",
+      "type": "number",
+      "format": "float",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "sort": {
+      "name": "sort",
+      "in": "query",
+      "description": "Specify how results should be sorted, either lexicographically by ID, or by distance from the specified search location. It is an error to specify a sort of `distance` if no geographical location has been specified for the current request.\n",
+      "type": "string",
+      "enum": [
+        "id",
+        "distance"
+      ],
+      "default": "id"
+    }
+  },
+  "paths": {
+    "/search": {
+      "parameters": [
+        {
+          "$ref": "#/parameters/authorizationHeader"
+        },
+        {
+          "$ref": "#/parameters/apiKey"
+        }
+      ],
+      "get": {
+        "tags": [
+          "search",
+          "things"
+        ],
+        "summary": "Search Things",
+        "operationId": "searchThings",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "description": "This endpoint allows clients to issue search requests against the Thingful API to discover IoT resources indexed by Thingful, and made searchable by various geographical and semantic parameters.\n\nSearch results include only metadata - they never return observations for a Thing. To see this data a client must then issue an access request directly against the Thing, optionally requesting a refresh of the data at that point.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/longitude"
+          },
+          {
+            "$ref": "#/parameters/latitude"
+          },
+          {
+            "$ref": "#/parameters/radius"
+          },
+          {
+            "$ref": "#/parameters/perPage"
+          },
+          {
+            "$ref": "#/parameters/sort"
+          },
+          {
+            "$ref": "#/parameters/nextCursor"
+          },
+          {
+            "$ref": "#/parameters/thingType"
+          },
+          {
+            "$ref": "#/parameters/quantityKind"
+          },
+          {
+            "$ref": "#/parameters/measuredBy"
+          },
+          {
+            "$ref": "#/parameters/unit"
+          },
+          {
+            "$ref": "#/parameters/domain"
+          },
+          {
+            "$ref": "#/parameters/licenseId"
+          },
+          {
+            "$ref": "#/parameters/licensePermits"
+          },
+          {
+            "$ref": "#/parameters/licenseRequires"
+          },
+          {
+            "$ref": "#/parameters/licenseProhibits"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@context": {
+                  "$ref": "#/definitions/Context"
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "self": {
+                      "type": "string",
+                      "format": "url",
+                      "example": "http://api.thingful.net/search?domain=m3-lite:Weather"
+                    },
+                    "next": {
+                      "type": "string",
+                      "format": "url",
+                      "example": "https://api.thingful.net/search?domain=m3-lite:Weather&nextCursor=sb7td6gd"
+                    }
+                  }
+                },
+                "data": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "$ref": "#/definitions/ThingID"
+                      },
+                      "type": {
+                        "$ref": "#/definitions/ThingType"
+                      },
+                      "attributes": {
+                        "allOf": [
+                          {
+                            "$ref": "#/definitions/ThingAttributes"
+                          },
+                          {
+                            "$ref": "#/definitions/ThingSearchAttributes"
+                          },
+                          {
+                            "$ref": "#/definitions/TimestampAttributes"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/responses/401ErrorResponse"
+          },
+          "403": {
+            "$ref": "#/responses/403ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/500ErrorResponse"
+          }
+        }
+      }
+    },
+    "/things/{thingID}": {
+      "parameters": [
+        {
+          "$ref": "#/parameters/thingID"
+        },
+        {
+          "$ref": "#/parameters/authorizationHeader"
+        },
+        {
+          "$ref": "#/parameters/apiKey"
+        }
+      ],
+      "get": {
+        "tags": [
+          "things"
+        ],
+        "summary": "Get a Thing by ID",
+        "operationId": "getThing",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "description": "This endpoint returns data for a Thing (an IoT resource) indexed by Thingful. It returns either the latest snapshot of the resource (which may be the latest data available), or a parameter can be specified which asks Thingful to go and fetch the value from the upstream data source \"now\".\n\nIn addition this endpoint also allows data to be retrieved from points in the past for the resource if it is available.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/refresh"
+          },
+          {
+            "$ref": "#/parameters/at"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ThingSuccessResponse"
+          },
+          "401": {
+            "$ref": "#/responses/401ErrorResponse"
+          },
+          "403": {
+            "$ref": "#/responses/403ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/responses/Thing404ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/500ErrorResponse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "things"
+        ],
+        "summary": "Update Thing",
+        "operationId": "updateThing",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "description": "This endpoint allows the owner of a Thingful resource to send an update containing new observations and/or location information to Thingful. When sending a PATCH request for a thing a client may *only* send the fields they specifically wish to update, other fields can be omitted. These omitted fields will be left unchanged after the update has completed.\n\nTypically a client might only send over the contained `observations` property for each channel containing new data points to be stored.\n",
+        "parameters": [
+          {
+            "name": "thing",
+            "in": "body",
+            "description": "The incoming Thing data to update.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "description": "The top level container for the updated data for the Thing.",
+                  "required": [
+                    "type",
+                    "id",
+                    "attributes"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/definitions/ThingID"
+                    },
+                    "type": {
+                      "$ref": "#/definitions/ThingType"
+                    },
+                    "attributes": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/ThingAttributes"
+                        },
+                        {
+                          "$ref": "#/definitions/ThingUpdateAttributes"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ThingSuccessResponse"
+          },
+          "401": {
+            "$ref": "#/responses/401ErrorResponse"
+          },
+          "403": {
+            "$ref": "#/responses/403ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/responses/Thing404ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/500ErrorResponse"
+          }
+        }
+      }
+    },
+    "/things": {
+      "post": {
+        "tags": [
+          "things"
+        ],
+        "summary": "Create Thing",
+        "operationId": "createThing",
+        "description": "This endpoint allows a user with sufficient permissions to create a new Thing instance within Thingful's database.\n",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "thing",
+            "in": "body",
+            "description": "The incoming Thing data to create.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "description": "The top level container for the updated data for the Thing.",
+                  "required": [
+                    "type",
+                    "attributes"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "thingType"
+                      ],
+                      "description": "The type of resource we are updating. For things this must be `thingType`."
+                    },
+                    "attributes": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/ThingAttributes"
+                        },
+                        {
+                          "$ref": "#/definitions/ThingCreateAttributes"
+                        }
+                      ],
+                      "required": [
+                        "title",
+                        "visibility",
+                        "endpoint",
+                        "provider",
+                        "category",
+                        "license",
+                        "location",
+                        "channels"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Success",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "@context": {
+                  "$ref": "#/definitions/Context"
+                },
+                "links": {
+                  "$ref": "#/definitions/Links"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "Container for the created Thing resource",
+                  "properties": {
+                    "@context": {
+                      "$ref": "#/definitions/Context"
+                    },
+                    "id": {
+                      "$ref": "#/definitions/ThingID"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "thingType"
+                      ],
+                      "description": "The type of the resource. For things this will always have the value `thingType`."
+                    },
+                    "attributes": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/ThingAttributes"
+                        },
+                        {
+                          "$ref": "#/definitions/ThingAccessAttributes"
+                        },
+                        {
+                          "$ref": "#/definitions/TimestampAttributes"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {
+              "Location": {
+                "description": "The location of the newly created Thing resource",
+                "type": "string",
+                "format": "url"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/things/{thingID}/channels/{channelID}": {
+      "parameters": [
+        {
+          "$ref": "#/parameters/thingID"
+        },
+        {
+          "name": "channelID",
+          "in": "path",
+          "description": "The ID of the channel",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "$ref": "#/parameters/authorizationHeader"
+        },
+        {
+          "$ref": "#/parameters/apiKey"
+        }
+      ],
+      "get": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Get a Channel by ID",
+        "operationId": "getChannel",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "description": "This endpoint returns data for an individual Channel belonging to a Thing indexed by Thingful. It allows clients to either request the last indexed snapshot of the channel, or if historical data for the channel is available, either a snapshot at a specific instance in time or a range of historical data.\n\nClients are also able to request that Thingful attempt to go and fetch the latest data for a channel by setting the `refresh` parameter to true.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/refresh"
+          },
+          {
+            "$ref": "#/parameters/at"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "This parameter is used to specify the start point of a time interval for which the client wishes to obtain data. It is expressed as an RFC3339 timestamp.\n\nIt is an error to request both a range (using `from` and `to`) and a specific instance (using `at`).\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "This parameter is used to specify the end point of a time interval for which the client wishes to obtain data. It is expressed as an RFC3339 timestamp.\n\nIt is an error to request both a range (using `from` and `to`) and a specific instance (using `at`).\n\nIt is also an error to specify a `to` value without a corresponding `from` timestamp, however you **may** request a `from` timestamp without a corresponding `to`, as in this case `to` defaults to the current time.\n",
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "$ref": "#/parameters/nextCursor"
+          },
+          {
+            "$ref": "#/parameters/perPage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ChannelSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/responses/400ErrorResponse"
+          },
+          "403": {
+            "$ref": "#/responses/403ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/responses/404ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/responses/422ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/500ErrorResponse"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "channels"
+        ],
+        "summary": "Update Channel",
+        "operationId": "updateChannel",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "description": "This endpoint allows the owner of a Thingful resource to send an update for an individual channel. When sending a PATCH request for a channel a client may only send the fields they specifically wish to update, other fields can be omitted. Omitted fields will be left unchanged after the update has completed.\n",
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "body",
+            "description": "The incoming channel data to update.",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "data": {
+                  "type": "object",
+                  "description": "The top level container for the channel data",
+                  "required": [
+                    "type",
+                    "id",
+                    "attributes"
+                  ],
+                  "properties": {
+                    "id": {
+                      "$ref": "#/definitions/ChannelID"
+                    },
+                    "type": {
+                      "$ref": "#/definitions/ChannelType"
+                    },
+                    "attributes": {
+                      "allOf": [
+                        {
+                          "$ref": "#/definitions/ChannelMetadataAttributes"
+                        },
+                        {
+                          "$ref": "#/definitions/ChannelObservationAttributes"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ChannelSuccessResponse"
+          },
+          "400": {
+            "$ref": "#/responses/400ErrorResponse"
+          },
+          "403": {
+            "$ref": "#/responses/403ErrorResponse"
+          },
+          "404": {
+            "$ref": "#/responses/404ErrorResponse"
+          },
+          "422": {
+            "$ref": "#/responses/422ErrorResponse"
+          },
+          "500": {
+            "$ref": "#/responses/500ErrorResponse"
+          }
+        }
+      }
+    },
+    "/search/channels": {
+      "parameters": [
+        {
+          "$ref": "#/parameters/authorizationHeader"
+        },
+        {
+          "$ref": "#/parameters/apiKey"
+        }
+      ],
+      "get": {
+        "tags": [
+          "search",
+          "channels"
+        ],
+        "summary": "Search Channels",
+        "operationId": "searchChannels",
+        "security": [
+          {
+            "basic": []
+          },
+          {
+            "bearer": []
+          },
+          {
+            "api_key": []
+          }
+        ],
+        "description": "This endpoint allows clients to issue search requests against the Thingful API to discover specific channels on IoT resource indexed by Thingful, where they are searchable be various geographical and semantic parameters.\n\nSearch results include only metadata - they never return observations for a Channel. To this data a client must then issue an access request to any channels of interest, optionally requesting a refresh of the data at that point.\n\nIn addition for channels a client may issue a historical request for ranges of time series data for a specific channel once they have used search in order to discover it.\n",
+        "parameters": [
+          {
+            "$ref": "#/parameters/longitude"
+          },
+          {
+            "$ref": "#/parameters/latitude"
+          },
+          {
+            "$ref": "#/parameters/radius"
+          },
+          {
+            "$ref": "#/parameters/perPage"
+          },
+          {
+            "$ref": "#/parameters/sort"
+          },
+          {
+            "$ref": "#/parameters/nextCursor"
+          },
+          {
+            "$ref": "#/parameters/thingType"
+          },
+          {
+            "$ref": "#/parameters/quantityKind"
+          },
+          {
+            "$ref": "#/parameters/measuredBy"
+          },
+          {
+            "$ref": "#/parameters/unit"
+          },
+          {
+            "$ref": "#/parameters/domain"
+          },
+          {
+            "$ref": "#/parameters/licenseId"
+          },
+          {
+            "$ref": "#/parameters/licensePermits"
+          },
+          {
+            "$ref": "#/parameters/licenseRequires"
+          },
+          {
+            "$ref": "#/parameters/licenseProhibits"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ThingID": {
+      "description": "The ID of the Thing",
+      "type": "string",
+      "example": "https://api.thingful.net/things/bj7ajg91"
+    },
+    "ThingType": {
+      "description": "Type definition for Thing resources. Must have the value `thingType`.",
+      "type": "string",
+      "example": "thingType",
+      "enum": [
+        "thingType"
+      ]
+    },
+    "ThingAttributes": {
+      "description": "The core attributes of a Thing resource",
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Weather Station 152",
+          "description": "The title of the Thing"
+        },
+        "description": {
+          "type": "string",
+          "example": "Weather station located in Brighton, UK.",
+          "description": "Human friendly description of the resource."
+        },
+        "thingType": {
+          "type": "string",
+          "description": "An expandable JSON-LD property representing the type of connected device this resource represents. The root type of this properties hierarchy is `thingful:ConnectedDevice`, representing a generic connected object, but certain devices may specialize this, for example a connected vehicle.",
+          "example": "thingful:TransportationNode"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": [
+            "thingful:Open",
+            "thingful:Shared",
+            "thingful:Closed"
+          ],
+          "example": "thingful:Shared",
+          "description": "An expandable JSON-LD property representing how Thingful classifies the resource in terms of the ODI's data classification hierarchy."
+        },
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "category": {
+          "type": "string",
+          "description": "The general category of the Thing resource",
+          "example": "thingful:Transport"
+        },
+        "license": {
+          "$ref": "#/definitions/License"
+        },
+        "attributionName": {
+          "type": "string",
+          "description": "The entity who should be attributed for this data if required by the terms of use of the original data.",
+          "example": "Entity Name"
+        },
+        "attributionURL": {
+          "type": "string",
+          "format": "url",
+          "example": "http://www.example-weather.net/entity"
+        },
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "metadata": {
+          "type": "array",
+          "description": "Optional array of additional metadata properties for the thing",
+          "items": {
+            "$ref": "#/definitions/Property"
+          }
+        },
+        "channels": {
+          "type": "array",
+          "description": "An array of channel objects representing the individual data channels published for the parent Thing",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ChannelIDAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelMetadataAttributes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ThingSearchAttributes": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "$ref": "#/definitions/Endpoint"
+        },
+        "channels": {
+          "type": "array",
+          "description": "An array of channel objects representing the individual data channels published for the parent Thing",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ChannelIDAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelMetadataAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelDataTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelHistoricalAttributes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ThingAccessAttributes": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "$ref": "#/definitions/Endpoint"
+        },
+        "channels": {
+          "type": "array",
+          "description": "An array of channel objects representing the individual data channels published for the parent Thing",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ChannelIDAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelMetadataAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelDataTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelObservationAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelHistoricalAttributes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ThingCreateAttributes": {
+      "type": "object",
+      "properties": {
+        "endpoint": {
+          "$ref": "#/definitions/Endpoint"
+        },
+        "channels": {
+          "type": "array",
+          "description": "An array of channel objects representing the individual data channels published for the parent Thing",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ChannelIDAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelMetadataAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelDataTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelObservationAttributes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ThingUpdateAttributes": {
+      "type": "object",
+      "properties": {
+        "channels": {
+          "type": "array",
+          "description": "An array of channel objects representing the individual data channels published for the parent Thing",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/definitions/ChannelIDAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelTypeAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelMetadataAttributes"
+              },
+              {
+                "$ref": "#/definitions/ChannelObservationAttributes"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "Endpoint": {
+      "type": "object",
+      "description": "An object containing a reference to the remote endpoint at which this data is originally published.",
+      "required": [
+        "uri"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "url",
+          "example": "http://api.example-weather.net/devices/152",
+          "description": "A unique URI for the resource which must be either the remote URL at which data can be retrieved for this Thing, or a non-resolvable URI representing the Thing.\n"
+        },
+        "contentType": {
+          "type": "string",
+          "example": "application/json",
+          "description": "The content type of the remote data resource."
+        }
+      }
+    },
+    "Provider": {
+      "type": "object",
+      "description": "An object containing information about the remote data provider.",
+      "required": [
+        "id",
+        "name",
+        "url"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The ID of the data provider",
+          "example": "https://api.thingful.net/providers/exampleweather"
+        },
+        "name": {
+          "type": "string",
+          "example": "Example Weather Network",
+          "description": "The name of the remote data provider"
+        },
+        "url": {
+          "type": "string",
+          "format": "url",
+          "example": "https://example-weather.net",
+          "description": "The website of the remote data provider"
+        }
+      }
+    },
+    "Location": {
+      "type": "object",
+      "description": "Object used to hold location information for a Thing, Channel or Observation.",
+      "required": [
+        "lng",
+        "lat"
+      ],
+      "properties": {
+        "lng": {
+          "type": "number",
+          "format": "float",
+          "description": "The longitude of the resource expressed in decimal notation.",
+          "example": -0.084101,
+          "maximum": 180,
+          "minimum": -180
+        },
+        "lat": {
+          "type": "number",
+          "format": "float",
+          "description": "The latitude of the resource expressed in decimal notation.",
+          "example": 51.552338,
+          "maximum": 90,
+          "minimum": -90
+        },
+        "elevation": {
+          "type": "number",
+          "format": "float",
+          "description": "The elevation above sea level, expressed in metres.",
+          "example": 23.9
+        }
+      }
+    },
+    "License": {
+      "type": "object",
+      "description": "Object used to hold information about the license under which the data for a Thing has been released.",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "url",
+          "example": "http://creativecommons.org/licenses/by-nc/3.0/",
+          "description": "The URL of the license"
+        },
+        "permits": {
+          "type": "array",
+          "description": "Array containing a list of permissions that this license grants. These are expressed as JSON-LD expandable properties or fully qualified URLS.",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "cc:Reproduction",
+            "cc:Distribution",
+            "cc:Sharing"
+          ]
+        },
+        "requires": {
+          "type": "array",
+          "description": "Array containing a list of requirements for this license. These are expressed as JSON-LD expandable properties or fully qualified URLS.",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "cc:Attribution"
+          ]
+        },
+        "prohibits": {
+          "type": "array",
+          "description": "Array containing a list of prohibitions for this license. These are expressed as JSON-LD expandable properties or fully qualified URLS.",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "cc:CommercialUse"
+          ]
+        },
+        "legalCode": {
+          "type": "string",
+          "format": "url",
+          "description": "Link to the legal definition of the license.",
+          "example": "http://creativecommons.org/licenses/by-nc/3.0/legalcode"
+        }
+      }
+    },
+    "ChannelID": {
+      "description": "The ID of the individual channel",
+      "type": "string",
+      "example": "https://api.thingful.net/things/bj7ajg91/channels/temperature"
+    },
+    "ChannelIDAttributes": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/ChannelID"
+        }
+      }
+    },
+    "ChannelType": {
+      "description": "The type of the resource. For channels this will always have the value `channelType`.",
+      "type": "string",
+      "enum": [
+        "channelType"
+      ]
+    },
+    "ChannelTypeAttributes": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/ChannelType"
+        }
+      }
+    },
+    "ChannelMetadataAttributes": {
+      "type": "object",
+      "description": "The attributes describing an individual channel within a Thing",
+      "properties": {
+        "domain": {
+          "type": "array",
+          "description": "The domain of this channel expressed as a JSON-LD expandable property.",
+          "items": {
+            "type": "string"
+          },
+          "example": [
+            "m3-lite:Weather",
+            "m3-lite:Environment"
+          ]
+        },
+        "quantityKind": {
+          "type": "string",
+          "description": "The \"quantity\" this channel is measuring expressed as a JSON-LD expandable property describing what type of quantity in the world is this channel measuring.",
+          "example": "m3-lite:AirTemperature"
+        },
+        "measuredBy": {
+          "type": "string",
+          "description": "A JSON-LD property expressing what type of sensor was used to measure this channel's data value.",
+          "example": "m3-lite:AirThermometer"
+        },
+        "unit": {
+          "type": "string",
+          "description": "The unit of measure for this data channel expressed as an expandable JSON-LD property containing a pointer to a unit defined in an external ontology.",
+          "example": "m3-lite:DegreeCelsius"
+        },
+        "metadata": {
+          "type": "array",
+          "description": "Optional array of additional metadata properties for the channel",
+          "items": {
+            "$ref": "#/definitions/Property"
+          }
+        }
+      }
+    },
+    "ChannelObservationAttributes": {
+      "type": "object",
+      "description": "Separate out observations from the rest of the channel as we omit these when searching.",
+      "properties": {
+        "observations": {
+          "type": "array",
+          "description": "An array containing individual observations for the channel.",
+          "items": {
+            "$ref": "#/definitions/Observation"
+          }
+        }
+      }
+    },
+    "ChannelDataTypeAttributes": {
+      "type": "object",
+      "properties": {
+        "dataType": {
+          "type": "string",
+          "description": "The data type of of all values recorded within the observations data structure for this channel. These properties are expandable JSON-LD properties which can be resolved to specific classes within an external ontology.",
+          "enum": [
+            "thingful:Float",
+            "thingful:Integer",
+            "thingful:String",
+            "thingful:DateTime"
+          ]
+        }
+      }
+    },
+    "ChannelExtraAttributes": {
+      "type": "object",
+      "properties": {
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "provider": {
+          "$ref": "#/definitions/Provider"
+        },
+        "license": {
+          "$ref": "#/definitions/License"
+        }
+      }
+    },
+    "ChannelHistoricalAttributes": {
+      "type": "object",
+      "properties": {
+        "historicalData": {
+          "type": "boolean",
+          "description": "Boolean flag indicating whether or not historical data is available for this individual channel.",
+          "example": false
+        }
+      }
+    },
+    "TimestampAttributes": {
+      "type": "object",
+      "required": [
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2017-05-29T11:16:34.000Z",
+          "description": "RFC3339 timestamp representing the time at which the resource has been created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "example": "2017-06-05T11:15:50.000Z",
+          "description": "RFC3339 timestamp representing the time at which the resource was last updated."
+        }
+      }
+    },
+    "Observation": {
+      "type": "object",
+      "description": "An individual observation for a channel is a single data value recorded at some specific location at some specific time instant.",
+      "required": [
+        "recordedAt",
+        "value"
+      ],
+      "properties": {
+        "recordedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The instant at which the observation was recorded expressed as an RFC3339 timestamp.",
+          "example": "2017-05-29T11:16:34.000Z"
+        },
+        "location": {
+          "$ref": "#/definitions/Location"
+        },
+        "value": {
+          "type": "string",
+          "description": "The actual recorded value serialised as a string. The `dataType` property on the parent channel can be used to control the deserialisation of this property should it be required.",
+          "example": "12.9"
+        }
+      }
+    },
+    "Property": {
+      "type": "object",
+      "description": "A single piece of generic metadata that should be attached to a Thing or Channel. This is used to capture extra metadata that is not already described by explicit properties of the object.",
+      "properties": {
+        "prop": {
+          "type": "string",
+          "description": "The name of this property, it can either be a URL literal, or a JSON-LD expandable property which resolves to a complete URL.",
+          "example": "thingful:hasBusRoute"
+        },
+        "val": {
+          "type": "string",
+          "description": "The value of the property. This can either be an expandable JSON-LD property, a complete URL describing some specific property, or a string literal.",
+          "example": "42"
+        }
+      }
+    },
+    "Links": {
+      "description": "Object that holds links pertaining to the resource or resources currently being requested",
+      "type": "object",
+      "properties": {
+        "self": {
+          "type": "string",
+          "format": "url",
+          "description": "Link containing the URL used to reference the current document",
+          "example": "https://api.thingful.net/things/bj7ajg91"
+        }
+      }
+    },
+    "Context": {
+      "description": "Link to a JSON-LD context semantically describing the returned JSON",
+      "type": "string",
+      "format": "url",
+      "example": "https://thingful.github.io/schema/context/page.ld"
+    },
+    "X-Rate-Limit": {
+      "type": "integer",
+      "format": "int32",
+      "description": "calls per hour allowed by the user"
+    },
+    "X-Expires-After": {
+      "type": "string",
+      "format": "date-time",
+      "description": "date in UTC when token expires"
+    },
+    "ErrorResponse": {
+      "description": "Container object for one or more errors returned by the API.",
+      "type": "object",
+      "required": [
+        "errors"
+      ],
+      "properties": {
+        "errors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Error"
+          }
+        }
+      }
+    },
+    "Error": {
+      "description": "An error object returned by the API.",
+      "type": "object",
+      "required": [
+        "status",
+        "title"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "The HTTP status code applicable to this problem expressed as a string",
+          "example": 400
+        },
+        "title": {
+          "type": "string",
+          "description": "Short human-readable summary of the problem",
+          "example": "Bad Request"
+        },
+        "detail": {
+          "type": "string",
+          "description": "Optional longer form human-readable explanation tailored to be specific to this specific occurence of the problem."
+        },
+        "source": {
+          "type": "object",
+          "properties": {
+            "pointer": {
+              "type": "string",
+              "description": "A string containing a JSON pointer to the specific field within a received JSON body that caused the problem, e.g. '/data/attributes/title' to refer to the `title` property within the `attributes` object that is a child of the top level `data` object.",
+              "example": "/data/attributes/title"
+            },
+            "parameter": {
+              "type": "string",
+              "description": "A string containing a reference to a specific query parameter that has caused the problem.",
+              "example": "lng"
+            }
+          }
+        }
+      }
+    }
+  },
+  "responses": {
+    "ThingSuccessResponse": {
+      "description": "Success",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "$ref": "#/definitions/Context"
+          },
+          "links": {
+            "$ref": "#/definitions/Links"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "@context": {
+                "$ref": "#/definitions/Context"
+              },
+              "id": {
+                "$ref": "#/definitions/ThingID"
+              },
+              "type": {
+                "$ref": "#/definitions/ThingType"
+              },
+              "attributes": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/ThingAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/ThingAccessAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/TimestampAttributes"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "ChannelSuccessResponse": {
+      "description": "Success",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "@context": {
+            "$ref": "#/definitions/Context"
+          },
+          "links": {
+            "type": "object",
+            "properties": {
+              "self": {
+                "type": "string",
+                "format": "url",
+                "description": "Link referencing the current document being viewed by the client.",
+                "example": "https://api.thingful.net/things/bj7ajg91/channels/temperature?from=2017-01-01T00:00:00Z&to=2017-01-07T00:00:00Z"
+              },
+              "next": {
+                "type": "string",
+                "format": "url",
+                "description": "Link pointing to the next page of observations available for the channel if any.",
+                "example": "https://api.thingful.net/things/bj7ajg91/channels/temperature?from=2017-01-01T00:00:00Z&to=2017-01-07T00:00:00Z&after=2017-01-02T00:00:00Z"
+              }
+            }
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/ChannelID"
+              },
+              "type": {
+                "$ref": "#/definitions/ChannelType"
+              },
+              "attributes": {
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/ChannelMetadataAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/ChannelDataTypeAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/ChannelObservationAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/ChannelExtraAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/TimestampAttributes"
+                  },
+                  {
+                    "$ref": "#/definitions/ChannelHistoricalAttributes"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "examples": {
+        "text/csv": "id,title foo,bar\n"
+      }
+    },
+    "500ErrorResponse": {
+      "description": "Server Error",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "500",
+              "title": "Unexpected Error",
+              "detail": "An error occurred while saving record to the database"
+            }
+          ]
+        }
+      }
+    },
+    "401ErrorResponse": {
+      "description": "Unauthorized",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "401",
+              "title": "Unauthorized",
+              "detail": "You are not authorized to view this resource."
+            }
+          ]
+        }
+      }
+    },
+    "404ErrorResponse": {
+      "description": "Not Found",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "404",
+              "title": "Resource Not Found",
+              "detail": "Unable to locate the requested resource"
+            }
+          ]
+        }
+      }
+    },
+    "Thing404ErrorResponse": {
+      "description": "Requested Thing not found",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "404",
+              "title": "Not Found",
+              "detail": "Unable to locate the Thing at https://api.thingful.net/things/bj7ajg91"
+            }
+          ]
+        }
+      }
+    },
+    "400ErrorResponse": {
+      "description": "Bad Request",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "400",
+              "title": "Bad Request",
+              "detail": "Missing required parameter",
+              "source": {
+                "parameter": "lng"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "403ErrorResponse": {
+      "description": "Forbidden",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "403",
+              "title": "Forbidden",
+              "detail": "You are forbidden from accessing this resource"
+            }
+          ]
+        }
+      }
+    },
+    "422ErrorResponse": {
+      "description": "Invalid Body",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponse"
+      },
+      "examples": {
+        "application/json": {
+          "errors": [
+            {
+              "status": "422",
+              "title": "Invalid Request",
+              "detail": "Missing required field",
+              "source": {
+                "pointer": "/data/attributes/title"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
